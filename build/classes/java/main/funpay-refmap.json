@@ -1,0 +1,106 @@
+{
+  "mappings": {
+    "jaypasha/funpay/invoke/ChatScreenInvoke": {
+      "keyPressed": "Lnet/minecraft/class_408;method_25404(III)Z",
+      "mouseClicked": "Lnet/minecraft/class_408;method_25402(DDI)Z",
+      "render": "Lnet/minecraft/class_408;method_25394(Lnet/minecraft/class_332;IIF)V"
+    },
+    "jaypasha/funpay/invoke/ClientConnectionInvoke": {
+      "handlePacket": "Lnet/minecraft/class_2535;method_10759(Lnet/minecraft/class_2596;Lnet/minecraft/class_2547;)V",
+      "send(Lnet/minecraft/network/packet/Packet;)V": "Lnet/minecraft/class_2535;method_10743(Lnet/minecraft/class_2596;)V"
+    },
+    "jaypasha/funpay/invoke/ClientPlayerEntityInvoke": {
+      "Lnet/minecraft/client/network/ClientPlayerEntity;getPitch()F": "Lnet/minecraft/class_746;method_36455()F",
+      "Lnet/minecraft/client/network/ClientPlayerEntity;getYaw()F": "Lnet/minecraft/class_746;method_36454()F",
+      "pushOutOfBlocks": "Lnet/minecraft/class_746;method_30673(DD)V",
+      "sendMovementPackets": "Lnet/minecraft/class_746;method_3136()V",
+      "tick": "Lnet/minecraft/class_746;method_5773()V",
+      "tickMovement": "Lnet/minecraft/class_746;method_6007()V"
+    },
+    "jaypasha/funpay/invoke/DeathScreenInvoke": {
+      "init": "Lnet/minecraft/class_418;method_25426()V"
+    },
+    "jaypasha/funpay/invoke/EntityInvoke": {
+      "Lnet/minecraft/entity/Entity;movementInputToVelocity(Lnet/minecraft/util/math/Vec3d;FF)Lnet/minecraft/util/math/Vec3d;": "Lnet/minecraft/class_1297;method_18795(Lnet/minecraft/class_243;FF)Lnet/minecraft/class_243;",
+      "updateVelocity": "Lnet/minecraft/class_1297;method_5724(FLnet/minecraft/class_243;)V"
+    },
+    "jaypasha/funpay/invoke/EntityRendererInvoke": {
+      "renderLabelIfPresent": "Lnet/minecraft/class_897;method_3926(Lnet/minecraft/class_10017;Lnet/minecraft/class_2561;Lnet/minecraft/class_4587;Lnet/minecraft/class_4597;I)V"
+    },
+    "jaypasha/funpay/invoke/GameRendererInvoke": {
+      "Lnet/minecraft/client/render/GameRenderer;renderHand:Z": "Lnet/minecraft/class_757;field_3992:Z",
+      "renderWorld": "Lnet/minecraft/class_757;method_3188(Lnet/minecraft/class_9779;)V"
+    },
+    "jaypasha/funpay/invoke/InGameHudInvoke": {
+      "render": "Lnet/minecraft/class_329;method_1753(Lnet/minecraft/class_332;Lnet/minecraft/class_9779;)V"
+    },
+    "jaypasha/funpay/invoke/KeyboardInvoke": {
+      "Lnet/minecraft/client/option/InactivityFpsLimiter;onInput()V": "Lnet/minecraft/class_9919;method_61939()V",
+      "onKey": "Lnet/minecraft/class_309;method_1466(JIIII)V"
+    },
+    "jaypasha/funpay/invoke/LivingEntityInvoke": {
+      "Lnet/minecraft/entity/LivingEntity;addVelocityInternal(Lnet/minecraft/util/math/Vec3d;)V": "Lnet/minecraft/class_1309;method_45319(Lnet/minecraft/class_243;)V",
+      "Lnet/minecraft/entity/LivingEntity;getRotationVector()Lnet/minecraft/util/math/Vec3d;": "Lnet/minecraft/class_1309;method_5720()Lnet/minecraft/class_243;",
+      "calcGlidingVelocity": "Lnet/minecraft/class_1309;method_61430(Lnet/minecraft/class_243;)Lnet/minecraft/class_243;",
+      "isPushable": "Lnet/minecraft/class_1309;method_5810()Z",
+      "jump": "Lnet/minecraft/class_1309;method_6043()V"
+    },
+    "jaypasha/funpay/invoke/PlayerEntityInvoke": {
+      "Lnet/minecraft/entity/player/PlayerEntity;getYaw()F": "Lnet/minecraft/class_1657;method_36454()F",
+      "attack": "Lnet/minecraft/class_1657;method_7324(Lnet/minecraft/class_1297;)V"
+    }
+  },
+  "data": {
+    "named:intermediary": {
+      "jaypasha/funpay/invoke/ChatScreenInvoke": {
+        "keyPressed": "Lnet/minecraft/class_408;method_25404(III)Z",
+        "mouseClicked": "Lnet/minecraft/class_408;method_25402(DDI)Z",
+        "render": "Lnet/minecraft/class_408;method_25394(Lnet/minecraft/class_332;IIF)V"
+      },
+      "jaypasha/funpay/invoke/ClientConnectionInvoke": {
+        "handlePacket": "Lnet/minecraft/class_2535;method_10759(Lnet/minecraft/class_2596;Lnet/minecraft/class_2547;)V",
+        "send(Lnet/minecraft/network/packet/Packet;)V": "Lnet/minecraft/class_2535;method_10743(Lnet/minecraft/class_2596;)V"
+      },
+      "jaypasha/funpay/invoke/ClientPlayerEntityInvoke": {
+        "Lnet/minecraft/client/network/ClientPlayerEntity;getPitch()F": "Lnet/minecraft/class_746;method_36455()F",
+        "Lnet/minecraft/client/network/ClientPlayerEntity;getYaw()F": "Lnet/minecraft/class_746;method_36454()F",
+        "pushOutOfBlocks": "Lnet/minecraft/class_746;method_30673(DD)V",
+        "sendMovementPackets": "Lnet/minecraft/class_746;method_3136()V",
+        "tick": "Lnet/minecraft/class_746;method_5773()V",
+        "tickMovement": "Lnet/minecraft/class_746;method_6007()V"
+      },
+      "jaypasha/funpay/invoke/DeathScreenInvoke": {
+        "init": "Lnet/minecraft/class_418;method_25426()V"
+      },
+      "jaypasha/funpay/invoke/EntityInvoke": {
+        "Lnet/minecraft/entity/Entity;movementInputToVelocity(Lnet/minecraft/util/math/Vec3d;FF)Lnet/minecraft/util/math/Vec3d;": "Lnet/minecraft/class_1297;method_18795(Lnet/minecraft/class_243;FF)Lnet/minecraft/class_243;",
+        "updateVelocity": "Lnet/minecraft/class_1297;method_5724(FLnet/minecraft/class_243;)V"
+      },
+      "jaypasha/funpay/invoke/EntityRendererInvoke": {
+        "renderLabelIfPresent": "Lnet/minecraft/class_897;method_3926(Lnet/minecraft/class_10017;Lnet/minecraft/class_2561;Lnet/minecraft/class_4587;Lnet/minecraft/class_4597;I)V"
+      },
+      "jaypasha/funpay/invoke/GameRendererInvoke": {
+        "Lnet/minecraft/client/render/GameRenderer;renderHand:Z": "Lnet/minecraft/class_757;field_3992:Z",
+        "renderWorld": "Lnet/minecraft/class_757;method_3188(Lnet/minecraft/class_9779;)V"
+      },
+      "jaypasha/funpay/invoke/InGameHudInvoke": {
+        "render": "Lnet/minecraft/class_329;method_1753(Lnet/minecraft/class_332;Lnet/minecraft/class_9779;)V"
+      },
+      "jaypasha/funpay/invoke/KeyboardInvoke": {
+        "Lnet/minecraft/client/option/InactivityFpsLimiter;onInput()V": "Lnet/minecraft/class_9919;method_61939()V",
+        "onKey": "Lnet/minecraft/class_309;method_1466(JIIII)V"
+      },
+      "jaypasha/funpay/invoke/LivingEntityInvoke": {
+        "Lnet/minecraft/entity/LivingEntity;addVelocityInternal(Lnet/minecraft/util/math/Vec3d;)V": "Lnet/minecraft/class_1309;method_45319(Lnet/minecraft/class_243;)V",
+        "Lnet/minecraft/entity/LivingEntity;getRotationVector()Lnet/minecraft/util/math/Vec3d;": "Lnet/minecraft/class_1309;method_5720()Lnet/minecraft/class_243;",
+        "calcGlidingVelocity": "Lnet/minecraft/class_1309;method_61430(Lnet/minecraft/class_243;)Lnet/minecraft/class_243;",
+        "isPushable": "Lnet/minecraft/class_1309;method_5810()Z",
+        "jump": "Lnet/minecraft/class_1309;method_6043()V"
+      },
+      "jaypasha/funpay/invoke/PlayerEntityInvoke": {
+        "Lnet/minecraft/entity/player/PlayerEntity;getYaw()F": "Lnet/minecraft/class_1657;method_36454()F",
+        "attack": "Lnet/minecraft/class_1657;method_7324(Lnet/minecraft/class_1297;)V"
+      }
+    }
+  }
+}

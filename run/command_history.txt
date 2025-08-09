@@ -1,0 +1,50 @@
+/time set 24000
+/time set 18000
+/time set 24000
+/time set 0
+/weather clear
+/time set day
+/weather clear
+/world save
+/time set day
+/clear
+/weather clear
+/time set night
+/time set 18000
+/time set day
+/l 1488
+/l sigma228
+/l 1488
+/time set ninght
+/time set night
+/time set day
+/l 1488
+/reg 1488 1488
+/reg 1488144 1488144
+/menu
+/time set day
+/reg 1488 1488
+/l 1488
+/time set day
+/l 1488
+/weather clear
+/time set day
+/gamemode survival
+/gamemode creative
+/time set day
+/gamemode survival
+/l sigma228
+/l 1488
+/l sigma228
+/рги
+/hub
+/clear
+/gamemode creative
+/l 1488
+/l sigma228
+/l 1488
+/l sigma228
+/l 1488
+/
+/l 1488
+/time set day

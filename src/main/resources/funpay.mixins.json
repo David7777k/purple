@@ -1,0 +1,25 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "jaypasha.funpay.invoke",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "ClientConnectionInvoke",
+    "EntityInvoke",
+    "LivingEntityInvoke",
+    "PlayerEntityInvoke"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "client": [
+    "ChatScreenInvoke",
+    "ClientPlayerEntityInvoke",
+    "DeathScreenInvoke",
+    "EntityRendererInvoke",
+    "GameRendererInvoke",
+    "InGameHudInvoke",
+    "KeyboardInvoke",
+    "TitleScreenInvoke"
+  ]
+}

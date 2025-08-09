@@ -1,0 +1,137 @@
+[
+  {
+    "Author": "jaypasha - https://funpay.com/users/7571071/"
+  },
+  {
+    "Module-Name": "Aura",
+    "Module-Enabled": true,
+    "Module-Key": 82,
+    "Module-Toggle-Action": 0,
+    "Module-Settings": [
+      {
+        "Setting-Name": "Дистанция Аттаки",
+        "Slider-Value": 2.9
+      },
+      {
+        "Setting-Name": "Добавочная дистанция",
+        "Slider-Value": 3.5
+      },
+      {
+        "Setting-Name": "Настройки",
+        "Mode-List-Setting-Selected": [
+          "Только Критами",
+          "Умные криты",
+          "Проверка луча",
+          "Бить через стены",
+          "Не бить при использовании"
+        ]
+      },
+      {
+        "Setting-Name": "Рандомизация",
+        "Mode-Setting-Value": "Плавная"
+      }
+    ]
+  },
+  {
+    "Module-Name": "Sprint",
+    "Module-Enabled": true,
+    "Module-Key": -1,
+    "Module-Toggle-Action": 0,
+    "Module-Settings": []
+  },
+  {
+    "Module-Name": "Arrows",
+    "Module-Enabled": true,
+    "Module-Key": -1,
+    "Module-Toggle-Action": 0,
+    "Module-Settings": [
+      {
+        "Setting-Name": "Показывать имя",
+        "Boolean-Enabled": true
+      }
+    ]
+  },
+  {
+    "Module-Name": "No Push",
+    "Module-Enabled": true,
+    "Module-Key": -1,
+    "Module-Toggle-Action": 0,
+    "Module-Settings": [
+      {
+        "Setting-Name": "Отменять от",
+        "Mode-List-Setting-Selected": [
+          "Игроков",
+          "Блоков"
+        ]
+      }
+    ]
+  },
+  {
+    "Module-Name": "GuiWalk",
+    "Module-Enabled": true,
+    "Module-Key": -1,
+    "Module-Toggle-Action": 0,
+    "Module-Settings": []
+  },
+  {
+    "Module-Name": "Target ESP",
+    "Module-Enabled": true,
+    "Module-Key": -1,
+    "Module-Toggle-Action": 0,
+    "Module-Settings": []
+  },
+  {
+    "Module-Name": "HUD",
+    "Module-Enabled": true,
+    "Module-Key": -1,
+    "Module-Toggle-Action": 0,
+    "Module-Settings": [
+      {
+        "Setting-Name": "Показывать",
+        "Mode-List-Setting-Selected": [
+          "Watermark",
+          "Keybinds",
+          "Target"
+        ]
+      }
+    ]
+  },
+  {
+    "Module-Name": "Projectile Predict",
+    "Module-Enabled": true,
+    "Module-Key": -1,
+    "Module-Toggle-Action": 0,
+    "Module-Settings": []
+  },
+  {
+    "Module-Name": "Name Tags",
+    "Module-Enabled": true,
+    "Module-Key": -1,
+    "Module-Toggle-Action": 0,
+    "Module-Settings": [
+      {
+        "Setting-Name": "Показывать броню",
+        "Boolean-Enabled": true
+      }
+    ]
+  },
+  {
+    "Module-Name": "Auto Totem",
+    "Module-Enabled": true,
+    "Module-Key": -1,
+    "Module-Toggle-Action": 0,
+    "Module-Settings": [
+      {
+        "Setting-Name": "Health",
+        "Slider-Value": 9.5
+      }
+    ]
+  },
+  {
+    "Module-Name": "ESP",
+    "Module-Enabled": true,
+    "Module-Key": -1,
+    "Module-Toggle-Action": 0,
+    "Module-Settings": []
+  }
+]

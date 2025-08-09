@@ -1,0 +1,2 @@
+v1	named	intermediary
+METHOD	jaypasha/funpay/invoke/EntityInvoke	(Lnet/minecraft/util/math/Vec3d;FF)Lnet/minecraft/util/math/Vec3d;	movementInputToVelocity	method_18795

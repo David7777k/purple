@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "funpay",
+  "version": "${version}",
+
+  "name": "funpay",
+  "description": "",
+  "authors": [],
+  "contact": {},
+
+  "license": "All-Rights-Reserved",
+  "icon": "assets/pasxalka/icon.png",
+
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "jaypasha.funpay.Pasxalka"
+    ],
+    "client": [
+      "jaypasha.funpay.ModClient"
+    ]
+  },
+
+  "mixins": [
+    "funpay.mixins.json"
+  ],
+
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}
