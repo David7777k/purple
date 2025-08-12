@@ -58,3 +58,4 @@ public class Pasxalka implements ModInitializer, Api {
         this.configurationService.load("bot");
     }
 }
+//qq
