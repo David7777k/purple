@@ -1,6 +1,4 @@
 /time set 24000
-/time set 18000
-/time set 24000
 /time set 0
 /weather clear
 /time set day
@@ -48,3 +46,5 @@
 /
 /l 1488
 /time set day
+/reg 123123123
+/l 123123

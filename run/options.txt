@@ -53,7 +53,7 @@ highContrastBlockOutline:false
 narratorHotkey:true
 resourcePacks:["vanilla","fabric"]
 incompatibleResourcePacks:[]
-lastServer:mc.funtime.su
+lastServer:a4craft.net
 lang:ru_ru
 chatVisibility:0
 chatOpacity:1.0

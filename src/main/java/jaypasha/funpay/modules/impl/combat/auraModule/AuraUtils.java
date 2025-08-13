@@ -20,17 +20,16 @@ public class AuraUtils {
     }
 
     public static AttackConfiguration generateAttackConfiguration(AttackAuraModule aura) {
-        // Важно: используем attackDistance + addedDistance — иначе цель может быть выбрана, но не атаковаться
         float fullDistance = aura.getAttackDistance().getValue() + aura.getAddedDistance().getValue();
         return new AttackConfiguration(
                 aura.getTarget(),
                 fullDistance,
-                aura.getOptions().isEnabled("Только Критами"),
-                aura.getOptions().isEnabled("Умные криты"),
-                aura.getOptions().isEnabled("Проверка луча"),
-                aura.getOptions().isEnabled("Бить через стены"),
-                aura.getOptions().isEnabled("Не бить при использовании"),
-                aura.getOptions().isEnabled("Только с оружием"),
+                aura.getOnlyCriticals().getEnabled(),
+                aura.getSmartCriticals().getEnabled(),
+                aura.getRayCasting().getEnabled(),
+                aura.getAttackThroughWall().getEnabled(),
+                aura.getDontAttackIfUsing().getEnabled(),
+                aura.getOnlyWithWeapon().getEnabled(),
                 aura.getFallDetector()::isFalling
         );
     }
@@ -38,14 +37,14 @@ public class AuraUtils {
     public static RotationConfiguration generateRotationConfiguration(AttackAuraModule m) {
         RotationLayer layer = switch (m.getRotationMode().getSelected()) {
             case "Обычный" -> new SmoothRotationLayer();
-            case "Тестовый" -> new SmoothRotationLayer(); // тут подменишь на экспериментальную ротацию
+            case "Тестовый" -> new SmoothRotationLayer();
             default -> new SmoothRotationLayer();
         };
         return new RotationConfiguration(
                 m.getTarget(),
                 m.getAttackDistance().getValue() + m.getAddedDistance().getValue(),
                 layer,
-                false // smoothRandomization убран — если понадобится, вернёшь настройку
+                false
         );
     }
 }

@@ -14,6 +14,9 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+/**
+ * Контроллер поиска целей.
+ */
 public class TargetFinderController implements TargetFinderLayer, Api {
 
     private Stream<? extends Entity> streamEntities(TargetFinderConfiguration tfc) {
@@ -41,15 +44,23 @@ public class TargetFinderController implements TargetFinderLayer, Api {
                 .min(Comparator.comparingDouble(e -> mc.player.distanceTo(e)));
     }
 
+    /**
+     * Ищет цель с минимальным здоровьем среди LivingEntity.
+     */
     public Optional<? extends Entity> minByHealth(TargetFinderConfiguration tfc, Predicate<Entity> extraPredicate) {
         return streamEntities(tfc)
                 .filter(e -> e instanceof LivingEntity && !e.equals(mc.player))
                 .filter(tfc::isValid)
                 .filter(extraPredicate)
                 .map(e -> (LivingEntity) e)
-                .min(Comparator.comparingDouble(LivingEntity::getHealth));
+                .min(Comparator.comparingDouble(LivingEntity::getHealth))
+                .map(e -> (Entity) e);
     }
 
+    /**
+     * Если в прицеле (crosshair) EntityHitResult — вернёт её (при прохождении фильтров),
+     * иначе вернёт результат each(...) (ближайшая подходящая).
+     */
     public Optional<? extends Entity> lookingAt(TargetFinderConfiguration tfc, Predicate<Entity> extraPredicate) {
         if (mc.crosshairTarget instanceof EntityHitResult ehr) {
             Entity hit = ehr.getEntity();

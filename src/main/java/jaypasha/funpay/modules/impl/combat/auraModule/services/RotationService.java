@@ -79,4 +79,7 @@ public class RotationService implements Api {
         pitch = MathHelper.clamp(pitch, -90.0f, 90.0f);
         return new float[]{yaw, pitch};
     }
+
+    public void applyRotation(RotationConfiguration rotCfg) {
+    }
 }

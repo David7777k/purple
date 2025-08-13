@@ -5,7 +5,7 @@
   {
     "Module-Name": "AttackAura",
     "Module-Enabled": false,
-    "Module-Key": -1,
+    "Module-Key": 82,
     "Module-Toggle-Action": 0,
     "Module-Settings": [
       {
@@ -33,6 +33,30 @@
       {
         "Setting-Name": "Буфер дистанции",
         "Slider-Value": 0.25
+      },
+      {
+        "Setting-Name": "Только Критами",
+        "Boolean-Enabled": false
+      },
+      {
+        "Setting-Name": "Умные криты",
+        "Boolean-Enabled": true
+      },
+      {
+        "Setting-Name": "Проверка луча",
+        "Boolean-Enabled": true
+      },
+      {
+        "Setting-Name": "Бить через стены",
+        "Boolean-Enabled": false
+      },
+      {
+        "Setting-Name": "Не бить при использовании",
+        "Boolean-Enabled": true
+      },
+      {
+        "Setting-Name": "Только с оружием",
+        "Boolean-Enabled": true
       }
     ]
   },

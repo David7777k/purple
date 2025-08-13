@@ -14,19 +14,33 @@ public class AttackController implements AttackLayer, Api {
 
     @Override
     public void attack(AttackConfiguration attackConfiguration) {
-        if (!attackConfiguration.isValid()) return;
+        if (attackConfiguration == null) return;
 
-        // Правильная генерация задержки: 500..600 ms
-        int delay = 500 + (int) (Math.random() * 100.0); // [500, 599]
-        if (!mathTime.isReached(delay)) return;
+        if (!attackConfiguration.isValid()) {
+            System.out.println("[Aura] attack blocked: " + AttackConfiguration.getDebugReason());
+            return;
+        }
 
-        mc.interactionManager.attackEntity(mc.player, attackConfiguration.entity());
+        // Правильная генерация задержки 500..600 ms
+        int delayMs = 500 + (int)(java.lang.Math.random() * 100.0); // [500,599]
+        if (!mathTime.isReached(delayMs)) {
+            // не печатаем каждый тик, чтобы не спамить
+            return;
+        }
 
-        AuraEvents.AttackEvent auraAttackEvent = new AuraEvents.AttackEvent();
-        EventManager.call(auraAttackEvent);
+        try {
+            mc.interactionManager.attackEntity(mc.player, attackConfiguration.entity());
+            mc.player.swingHand(Hand.MAIN_HAND);
 
-        mc.player.swingHand(Hand.MAIN_HAND);
-        mathTime.resetCounter();
+            AuraEvents.AttackEvent auraAttackEvent = new AuraEvents.AttackEvent();
+            EventManager.call(auraAttackEvent);
+
+            System.out.println("[Aura] attacked: " + attackConfiguration.entity().getName().getString());
+        } catch (Throwable t) {
+            System.err.println("[Aura] attack error: " + t.getMessage());
+            t.printStackTrace();
+        } finally {
+            mathTime.resetCounter();
+        }
     }
-
 }
