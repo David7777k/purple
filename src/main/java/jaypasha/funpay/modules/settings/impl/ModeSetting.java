@@ -82,6 +82,19 @@ public class ModeSetting extends SettingLayer {
         return this;
     }
 
+    public String getValue() {
+        return value;
+    }
+
+    public String getSelected() {
+        return getValue();
+    }
+
+    public ModeSetting select(String value) {
+        this.set(value);
+        return this;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof String) || value == null) return false;

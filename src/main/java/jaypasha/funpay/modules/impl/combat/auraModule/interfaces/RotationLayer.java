@@ -1,15 +1,16 @@
 package jaypasha.funpay.modules.impl.combat.auraModule.interfaces;
 
-import jaypasha.funpay.Api;
 import jaypasha.funpay.modules.impl.combat.auraModule.Vector;
 import jaypasha.funpay.modules.impl.combat.auraModule.configs.RotationConfiguration;
-import jaypasha.funpay.modules.impl.combat.auraModule.randomization.Randomization;
 import net.minecraft.util.math.Vec3d;
 
-public interface RotationLayer extends Api {
+public interface RotationLayer {
+    /**
+     * @param current текущее направление взгляда (нормализованный Vec3d)
+     * @param desired желаемое направление на цель (нормализованный Vec3d)
+     * @return следующее направление (нормализованный Vec3d)
+     */
+    Vec3d apply(Vec3d current, Vec3d desired);
 
     Vector applyRotation(RotationConfiguration configuration, Vector from, Vec3d to);
-
-    Randomization applyRandomizationValue(Randomization.RandomizationType randomizationType);
-
 }

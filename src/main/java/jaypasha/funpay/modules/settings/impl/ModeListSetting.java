@@ -2,16 +2,13 @@ package jaypasha.funpay.modules.settings.impl;
 
 /*
  * Create by puzatiy
- * At 03.06.2025
+ * Updated by Alex’s AI‑напарник
  */
 
 import jaypasha.funpay.modules.more.ModuleLayer;
 import jaypasha.funpay.modules.settings.SettingLayer;
-import jaypasha.funpay.modules.settings.SettingLayerBuilder;
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 import net.minecraft.text.Text;
 
@@ -31,9 +28,35 @@ public class ModeListSetting extends SettingLayer {
         super(name, description, visible);
     }
 
+    /**
+     * Задаёт список доступных значений.
+     */
     public ModeListSetting set(String... list) {
-        Arrays.stream(list).map(this::create).forEach(values::add);
+        Arrays.stream(list)
+                .map(this::create)
+                .forEach(values::add);
+        return this;
+    }
 
+    /**
+     * Включает элемент по имени (если найден).
+     */
+    public ModeListSetting enable(String name) {
+        BooleanSetting bs = get(name);
+        if (bs != null) {
+            bs.set(true);
+        }
+        return this;
+    }
+
+    /**
+     * Выключает элемент по имени (если найден).
+     */
+    public ModeListSetting disable(String name) {
+        BooleanSetting bs = get(name);
+        if (bs != null) {
+            bs.set(false);
+        }
         return this;
     }
 
@@ -42,22 +65,35 @@ public class ModeListSetting extends SettingLayer {
     }
 
     public boolean emptySelected() {
-        return values.stream().filter(BooleanSetting::getEnabled).toList().isEmpty();
+        return values.stream()
+                .noneMatch(BooleanSetting::getEnabled);
     }
 
     public List<String> asStringList() {
-        return values.stream().map(BooleanSetting::getName).map(Text::getString).toList();
+        return values.stream()
+                .map(BooleanSetting::getName)
+                .map(Text::getString)
+                .toList();
     }
 
     public List<String> getSelected() {
-        return values.stream().filter(BooleanSetting::getEnabled).map(BooleanSetting::getName).map(Text::getString).toList();
+        return values.stream()
+                .filter(BooleanSetting::getEnabled)
+                .map(BooleanSetting::getName)
+                .map(Text::getString)
+                .toList();
     }
 
+    /**
+     * Возвращает BooleanSetting по имени (регистр не учитывается).
+     * Если не найдено — вернёт null (без NPE).
+     */
     public BooleanSetting get(String text) {
-        return Objects.requireNonNull(values.stream()
+        if (text == null) return null;
+        return values.stream()
                 .filter(e -> e.getName().getString().equalsIgnoreCase(text))
                 .findFirst()
-                .orElse(null));
+                .orElse(null);
     }
 
     public BooleanSetting create(String text) {
@@ -67,14 +103,12 @@ public class ModeListSetting extends SettingLayer {
     @Override
     public ModeListSetting register(ModuleLayer provider) {
         super.reg(provider);
-
         return this;
     }
 
     @Override
     public ModeListSetting collection(Collection collection) {
         collection.put(this);
-
         return this;
     }
 }

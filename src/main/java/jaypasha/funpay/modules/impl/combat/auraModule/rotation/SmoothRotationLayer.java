@@ -1,46 +1,55 @@
 package jaypasha.funpay.modules.impl.combat.auraModule.rotation;
 
-import jaypasha.funpay.Pasxalka;
+import jaypasha.funpay.modules.impl.combat.auraModule.Vector;
 import jaypasha.funpay.modules.impl.combat.auraModule.configs.RotationConfiguration;
 import jaypasha.funpay.modules.impl.combat.auraModule.interfaces.RotationLayer;
-import jaypasha.funpay.modules.impl.combat.auraModule.Vector;
-import jaypasha.funpay.modules.impl.combat.auraModule.randomization.Randomization;
-import jaypasha.funpay.utility.math.MathVector;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 
 public class SmoothRotationLayer implements RotationLayer {
 
+    private final double maxStep; // чем меньше — тем плавнее
+    private final double snapDot; // если почти совпало — щёлкнуть точно на цель
+
     public SmoothRotationLayer() {
-        Pasxalka.getInstance().getEventBus().register(this);
+        this(0.2, 0.995);
+    }
+
+    public SmoothRotationLayer(double maxStep, double snapDot) {
+        this.maxStep = Math.max(0.01, Math.min(1.0, maxStep));
+        this.snapDot = Math.max(0.9, Math.min(0.9999, snapDot));
+    }
+
+    @Override
+    public Vec3d apply(Vec3d current, Vec3d desired) {
+        Vec3d cur = current.normalize();
+        Vec3d des = desired.normalize();
+
+        double dot = cur.dotProduct(des);
+        if (dot >= snapDot) {
+            return des; // почти смотрим на цель — сразу фиксируемся
+        }
+
+        Vec3d stepped = cur.multiply(1.0 - maxStep).add(des.multiply(maxStep));
+        return stepped.normalize();
     }
 
     @Override
     public Vector applyRotation(RotationConfiguration configuration, Vector from, Vec3d to) {
-        Vec3d positionDelta = MathVector.calculatePositionDelta(mc.player.getPos(), to);
-        Vector calculatedRotation = MathVector.calculateRotation(positionDelta);
-        Vector rotationDelta = MathVector.calculateRotationDelta(from, calculatedRotation);
+        // Конвертим углы -> вектор (текущее), применяем apply, затем вектор -> углы
+        Vec3d currentDir = from.toVector().normalize();
+        Vec3d nextDir = apply(currentDir, to.normalize());
 
-        float yawDelta = rotationDelta.getYaw();
-        float pitchDelta = rotationDelta.getPitch();
+        // Пересчитываем обратно в yaw/pitch
+        double x = nextDir.x;
+        double y = nextDir.y;
+        double z = nextDir.z;
+        double h = Math.sqrt(x * x + z * z);
 
-        float rotationDifference = (float) Math.hypot(Math.abs(yawDelta), Math.abs(pitchDelta));
-        if (rotationDifference == .0f) return from;
+        float yaw = (float) Math.toDegrees(Math.atan2(-x, z));
+        float pitch = (float) Math.toDegrees(Math.atan2(-y, h));
+        if (pitch > 90.0f) pitch = 90.0f;
+        if (pitch < -90.0f) pitch = -90.0f;
 
-        float straightLineYaw = Math.abs(yawDelta / rotationDifference) * 35;
-        float straightLinePitch = Math.abs(pitchDelta / rotationDifference) * 35;
-
-        float moveYaw = Math.min(Math.max(yawDelta, -straightLineYaw), straightLineYaw);
-        float movePitch = Math.min(Math.max(pitchDelta, -straightLinePitch), straightLinePitch);
-
-        return new Vector(
-            MathHelper.lerp(.8f, from.getYaw(), from.getYaw() + moveYaw),
-            MathHelper.lerp(.8f, from.getPitch(), from.getPitch() + movePitch)
-        );
-    }
-
-    @Override
-    public Randomization applyRandomizationValue(Randomization.RandomizationType randomizationType) {
-        return new Randomization(new Vec3d(0.13234f, 0.0515, 0.04156), jaypasha.funpay.utility.math.Math.random(40, 100), randomizationType);
+        return new Vector(yaw, pitch);
     }
 }

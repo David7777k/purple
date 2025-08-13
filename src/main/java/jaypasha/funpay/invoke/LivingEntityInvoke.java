@@ -35,35 +35,61 @@ public class LivingEntityInvoke {
 
     @Redirect(method = "jump", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/LivingEntity;addVelocityInternal(Lnet/minecraft/util/math/Vec3d;)V"))
     private void hookFixRotation(LivingEntity instance, Vec3d vec3d) {
-        RotationService rotationService = ((AttackAuraModule) Pasxalka.getInstance().getModuleRepository().find(AttackAuraModule.class)).getRotationService();
-        Vector vector = rotationService.getCurrentVector();
-
-        if ((Object) this != MinecraftClient.getInstance().player) {
+        // Получаем сервис безопасно
+        AttackAuraModule aura = (AttackAuraModule) Pasxalka.getInstance().getModuleRepository().find(AttackAuraModule.class);
+        if (aura == null) {
             instance.addVelocityInternal(vec3d);
+            return;
         }
 
-        if (vector == null) {
+        RotationService rotationService = aura.getRotationService();
+        if (rotationService == null) {
             instance.addVelocityInternal(vec3d);
+            return;
+        }
+
+        // Если это не локальный игрок — поведение по умолчанию
+        if ((Object) this != MinecraftClient.getInstance().player) {
+            instance.addVelocityInternal(vec3d);
+            return;
+        }
+
+        // Получаем Vector (yaw/pitch)
+        Vector vector = rotationService.getCurrentRotationVector();
+        if (vector == null) {
+            // fallback к обычной физике
+            instance.addVelocityInternal(vec3d);
+            return;
         }
 
         float yaw = vector.getYaw() * 0.017453292F;
-
         instance.addVelocityInternal(new Vec3d(-MathHelper.sin(yaw) * 0.2F, 0.0, MathHelper.cos(yaw) * 0.2F));
     }
 
     @Redirect(method = "calcGlidingVelocity", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/LivingEntity;getRotationVector()Lnet/minecraft/util/math/Vec3d;"))
     private Vec3d hookModifyFallFlyingRotationVector(LivingEntity original) {
+        // Только для локального игрока меняем вектор
         if ((Object) this != MinecraftClient.getInstance().player) {
             return original.getRotationVector();
         }
 
-        var rotation = ((AttackAuraModule) Pasxalka.getInstance().getModuleRepository().find(AttackAuraModule.class)).getRotationService().getCurrentVector();
-
-        if (rotation == null) {
+        AttackAuraModule aura = (AttackAuraModule) Pasxalka.getInstance().getModuleRepository().find(AttackAuraModule.class);
+        if (aura == null) {
             return original.getRotationVector();
         }
 
-        return rotation.toVector();
+        RotationService rotationService = aura.getRotationService();
+        if (rotationService == null) {
+            return original.getRotationVector();
+        }
+
+        // Здесь нужен Vec3d: используем getCurrentVector()
+        Vec3d rotationVec = rotationService.getCurrentVector();
+        if (rotationVec == null) {
+            return original.getRotationVector();
+        }
+
+        return rotationVec;
     }
 
 }

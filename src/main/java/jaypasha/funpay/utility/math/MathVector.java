@@ -1,10 +1,5 @@
 package jaypasha.funpay.utility.math;
 
-/*
- * Create by puzatiy
- * At 03.06.2025
- */
-
 import jaypasha.funpay.Api;
 import jaypasha.funpay.modules.impl.combat.auraModule.Vector;
 import net.minecraft.client.util.math.Vector2f;
@@ -18,7 +13,6 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
 
-import java.lang.Math;
 import java.util.function.Predicate;
 
 public class MathVector implements Api {
@@ -28,15 +22,16 @@ public class MathVector implements Api {
 
         double x = interpolate(entity.prevX, entity.getPos().x) - interpolate(mc.player.prevX, mc.player.getPos().x);
         double z = interpolate(entity.prevZ, entity.getPos().z) - interpolate(mc.player.prevZ, mc.player.getPos().z);
-        return (float) -(Math.atan2(x, z) * (180 / Math.PI));
+        // явно используем java.lang.Math
+        return (float) -(java.lang.Math.atan2(x, z) * (180 / java.lang.Math.PI));
     }
 
     public static Vec3d lerpPosition(Entity entity) {
         float tickDelta = mc.getRenderTickCounter().getTickDelta(true);
         return new Vec3d(
-            entity.prevX + (entity.getX() - entity.prevX) * tickDelta,
-            entity.prevY + (entity.getY() - entity.prevY) * tickDelta,
-            entity.prevZ + (entity.getZ() - entity.prevZ) * tickDelta
+                entity.prevX + (entity.getX() - entity.prevX) * tickDelta,
+                entity.prevY + (entity.getY() - entity.prevY) * tickDelta,
+                entity.prevZ + (entity.getZ() - entity.prevZ) * tickDelta
         );
     }
 
@@ -60,9 +55,10 @@ public class MathVector implements Api {
     }
 
     public static Vector calculateRotation(Vec3d vec3d) {
+        // Здесь используем java.lang.Math явно, чтобы не было конфликтов с локальным Math
         return new Vector(
-                (float) Math.toDegrees(Math.atan2(vec3d.z, vec3d.x)) - 90,
-                (float) Math.toDegrees(-Math.atan2(vec3d.y, Math.hypot(vec3d.x, vec3d.z)))
+                (float) java.lang.Math.toDegrees(java.lang.Math.atan2(vec3d.z, vec3d.x)) - 90f,
+                (float) java.lang.Math.toDegrees(-java.lang.Math.atan2(vec3d.y, java.lang.Math.hypot(vec3d.x, vec3d.z)))
         ).wrapDegrees();
     }
 
@@ -70,21 +66,17 @@ public class MathVector implements Api {
         return to.subtract(from);
     }
 
-    public static BlockHitResult raycast(double range, Vector vector, boolean includeFluids) {
+    // --- Перегрузка: принимаем Vec3d ---
+    public static BlockHitResult raycast(double range, Vec3d dirVec, boolean includeFluids) {
         Entity entity = mc.cameraEntity;
-
-        if (entity == null) {
-            return null;
-        }
+        if (entity == null) return null;
 
         Vec3d start = entity.getCameraPosVec(1.0F);
-        Vec3d rotationVec = vector.toVector();
+        Vec3d rotationVec = dirVec.normalize();
         Vec3d end = start.add(rotationVec.x * range, rotationVec.y * range, rotationVec.z * range);
 
         World world = mc.world;
-        if (world == null) {
-            return null;
-        }
+        if (world == null) return null;
 
         RaycastContext.FluidHandling fluidHandling = includeFluids ? RaycastContext.FluidHandling.ANY : RaycastContext.FluidHandling.NONE;
         RaycastContext context = new RaycastContext(start, end, RaycastContext.ShapeType.OUTLINE, fluidHandling, entity);
@@ -92,25 +84,31 @@ public class MathVector implements Api {
         return world.raycast(context);
     }
 
+    // --- Перегрузка: принимаем наш Vector (yaw/pitch) ---
+    public static BlockHitResult raycast(double range, Vector rotVector, boolean includeFluids) {
+        return raycast(range, rotVector.toVector(), includeFluids);
+    }
 
-    public static EntityHitResult raycastEntity(double range, Vector vector, Predicate<Entity> filter) {
+    public static EntityHitResult raycastEntity(double range, Vec3d dirVec, Predicate<Entity> filter) {
         Entity entity = mc.cameraEntity;
         if (entity == null) return null;
 
         Vec3d cameraVec = entity.getCameraPosVec(1.0F);
-        Vec3d rotationVec = vector.toVector();
-
-        Vec3d vec3d3 = cameraVec.add(rotationVec.x * range, rotationVec.y * range, rotationVec.z * range);
+        Vec3d rotationVec = dirVec.normalize();
+        Vec3d end = cameraVec.add(rotationVec.x * range, rotationVec.y * range, rotationVec.z * range);
         Box box = entity.getBoundingBox().stretch(rotationVec.multiply(range)).expand(1.0, 1.0, 1.0);
 
         return ProjectileUtil.raycast(
                 entity,
                 cameraVec,
-                vec3d3,
+                end,
                 box,
                 (e) -> !e.isSpectator() && filter.test(e),
                 range * range
         );
     }
 
+    public static EntityHitResult raycastEntity(double range, Vector rotVector, Predicate<Entity> filter) {
+        return raycastEntity(range, rotVector.toVector(), filter);
+    }
 }

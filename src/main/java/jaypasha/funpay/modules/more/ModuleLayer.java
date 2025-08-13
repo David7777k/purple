@@ -1,12 +1,6 @@
 package jaypasha.funpay.modules.more;
 
-/*
- * Create by puzatiy
- * At 03.06.2025
- */
-
 import com.google.common.annotations.Beta;
-import com.google.common.eventbus.Subscribe;
 import jaypasha.funpay.Api;
 import jaypasha.funpay.api.animations.Animation;
 import jaypasha.funpay.api.animations.Direction;
@@ -37,8 +31,9 @@ public class ModuleLayer implements Api {
     @Setter
     Integer action = 0;
 
-    @Setter
-    Boolean enabled = false, binding = false;
+    // protected чтобы подклассы могли использовать поле напрямую
+    protected Boolean enabled = false;
+    protected Boolean binding = false;
 
     List<SettingLayer> settingLayers = new ArrayList<>();
 
@@ -60,6 +55,12 @@ public class ModuleLayer implements Api {
         this.animation.setDirection(enabled ? Direction.FORWARDS : Direction.BACKWARDS);
     }
 
+    // Публичный геттер состояния
+    public boolean isEnabled() {
+        return enabled != null && enabled;
+    }
+
+    // Сеттер с сохранением прежней логики toggle
     public void setEnabled(Boolean enabled) {
         if (enabled != this.enabled)
             toggleEnabled();
@@ -81,6 +82,15 @@ public class ModuleLayer implements Api {
         else deactivate();
     }
 
+    // Публичный сеттер binding — раньше был пустым, теперь работает.
+    public void setBinding(boolean b) {
+        this.binding = b;
+    }
+
+    public boolean getBinding() {
+        return binding != null && binding;
+    }
+
     public List<SettingLayer> filter(Predicate<SettingLayer> predicate) {
         return settingLayers.stream().filter(predicate).toList();
     }
@@ -89,6 +99,7 @@ public class ModuleLayer implements Api {
         settingLayers.forEach(action);
     }
 
+    // Hooks — переопределяй в дочерних классах
     public void activate() {
     }
 

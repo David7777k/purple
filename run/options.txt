@@ -12,7 +12,7 @@ darknessEffectScale:1.0
 glintSpeed:0.5
 glintStrength:0.75
 prioritizeChunkUpdates:1
-fullscreen:false
+fullscreen:true
 gamma:0.5
 graphicsMode:1
 guiScale:2
@@ -53,7 +53,7 @@ highContrastBlockOutline:false
 narratorHotkey:true
 resourcePacks:["vanilla","fabric"]
 incompatibleResourcePacks:[]
-lastServer:
+lastServer:mc.funtime.su
 lang:ru_ru
 chatVisibility:0
 chatOpacity:1.0

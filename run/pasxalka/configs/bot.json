@@ -3,26 +3,36 @@
     "Author": "jaypasha - https://funpay.com/users/7571071/"
   },
   {
-    "Module-Name": "Aura",
+    "Module-Name": "AttackAura",
     "Module-Enabled": false,
-    "Module-Key": 82,
+    "Module-Key": -1,
     "Module-Toggle-Action": 0,
     "Module-Settings": [
       {
-        "Setting-Name": "Дистанция Аттаки",
+        "Setting-Name": "Цели",
+        "Mode-List-Setting-Selected": [
+          "Игроки"
+        ]
+      },
+      {
+        "Setting-Name": "Приоритет",
+        "Mode-Setting-Value": "Ближайший"
+      },
+      {
+        "Setting-Name": "Тип наводки",
+        "Mode-Setting-Value": "Обычный"
+      },
+      {
+        "Setting-Name": "Угол обзора",
+        "Slider-Value": 90.0
+      },
+      {
+        "Setting-Name": "Дистанция атаки",
         "Slider-Value": 3.0
       },
       {
-        "Setting-Name": "Добавочная дистанция",
-        "Slider-Value": 3.0
-      },
-      {
-        "Setting-Name": "Настройки",
-        "Mode-List-Setting-Selected": []
-      },
-      {
-        "Setting-Name": "Рандомизация",
-        "Mode-Setting-Value": "N/A"
+        "Setting-Name": "Буфер дистанции",
+        "Slider-Value": 0.25
       }
     ]
   },

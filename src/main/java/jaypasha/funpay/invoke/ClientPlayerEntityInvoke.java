@@ -12,7 +12,6 @@ import jaypasha.funpay.api.events.impl.CollisionEvent;
 import jaypasha.funpay.api.events.impl.PlayerEvent;
 import jaypasha.funpay.api.events.impl.TickEvent;
 import jaypasha.funpay.modules.impl.combat.AttackAuraModule;
-import jaypasha.funpay.modules.impl.combat.auraModule.Vector;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.util.math.Vec3d;
 import org.spongepowered.asm.mixin.Mixin;
@@ -45,24 +44,32 @@ public class ClientPlayerEntityInvoke {
 
     @ModifyExpressionValue(method = {"sendMovementPackets", "tick"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerEntity;getYaw()F"))
     private float hookSilentRotationYaw(float original) {
-        Vector vector = ((AttackAuraModule) Pasxalka.getInstance().getModuleRepository().find(AttackAuraModule.class)).getRotationService().getCurrentVector();
+        AttackAuraModule aura = (AttackAuraModule) Pasxalka.getInstance().getModuleRepository().find(AttackAuraModule.class);
+        if (aura == null) return original;
 
-        if (vector == null) {
-            return original;
-        }
+        var rotationService = aura.getRotationService();
+        if (rotationService == null) return original;
+
+        // теперь получаем Vector (yaw/pitch)
+        jaypasha.funpay.modules.impl.combat.auraModule.Vector vector = rotationService.getCurrentRotationVector();
+        if (vector == null) return original;
 
         return vector.getYaw();
     }
 
     @ModifyExpressionValue(method = {"sendMovementPackets", "tick"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerEntity;getPitch()F"))
     private float hookSilentRotationPitch(float original) {
-        Vector vector = ((AttackAuraModule) Pasxalka.getInstance().getModuleRepository().find(AttackAuraModule.class)).getRotationService().getCurrentVector();
+        AttackAuraModule aura = (AttackAuraModule) Pasxalka.getInstance().getModuleRepository().find(AttackAuraModule.class);
+        if (aura == null) return original;
 
-        if (vector == null) {
-            return original;
-        }
+        var rotationService = aura.getRotationService();
+        if (rotationService == null) return original;
+
+        jaypasha.funpay.modules.impl.combat.auraModule.Vector vector = rotationService.getCurrentRotationVector();
+        if (vector == null) return original;
 
         return vector.getPitch();
     }
+
 
 }

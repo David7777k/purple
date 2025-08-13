@@ -17,12 +17,14 @@ public class PlayerEntityInvoke {
     private float hookFixRotation(PlayerEntity entity) {
         if ((Object) this != MinecraftClient.getInstance().player) return entity.getYaw();
 
-        RotationService rotationService = ((AttackAuraModule) Pasxalka.getInstance().getModuleRepository().find(AttackAuraModule.class)).getRotationService();
-        Vector vector = rotationService.getCurrentVector();
+        AttackAuraModule aura = (AttackAuraModule) Pasxalka.getInstance().getModuleRepository().find(AttackAuraModule.class);
+        if (aura == null) return entity.getYaw();
 
-        if (vector == null) {
-            return entity.getYaw();
-        }
+        RotationService rotationService = aura.getRotationService();
+        if (rotationService == null) return entity.getYaw();
+
+        Vector vector = rotationService.getCurrentRotationVector();
+        if (vector == null) return entity.getYaw();
 
         return vector.getYaw();
     }

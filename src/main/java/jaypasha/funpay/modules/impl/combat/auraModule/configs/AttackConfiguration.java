@@ -1,53 +1,69 @@
 package jaypasha.funpay.modules.impl.combat.auraModule.configs;
 
 import jaypasha.funpay.Api;
-import jaypasha.funpay.Pasxalka;
-import jaypasha.funpay.modules.impl.combat.AttackAuraModule;
 import jaypasha.funpay.modules.impl.combat.auraModule.services.RotationService;
 import jaypasha.funpay.utility.math.MathVector;
 import net.minecraft.entity.Entity;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.EntityHitResult;
+import net.minecraft.item.AxeItem;
+import net.minecraft.item.SwordItem;
 import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.Vec3d;
 
-public record AttackConfiguration (
-    Entity entity,
-    float attackDistance,
-    boolean onlyCriticals,
-    boolean smartCriticals,
-    boolean rayCasting,
-    boolean attackThrowWall,
-    boolean dontAttackIfUsing
+import java.util.function.BooleanSupplier;
+
+public record AttackConfiguration(
+        Entity entity,
+        float attackDistance,
+        boolean onlyCriticals,
+        boolean smartCriticals,
+        boolean rayCasting,
+        boolean attackThroughWall,
+        boolean dontAttackIfUsing,
+        boolean onlyWithWeapon,
+        BooleanSupplier isFalling
 ) implements Api {
 
     public boolean isValid() {
-        return mc.player.distanceTo(entity) <= attackDistance && isCanAttack();
+        return entity != null
+                && mc.player != null
+                && mc.interactionManager != null
+                && mc.player.distanceTo(entity) <= attackDistance
+                && canAttackNow();
     }
 
-    boolean isCanAttack() {
+    boolean canAttackNow() {
         if (!isSwingCooled()) return false;
 
-        if (dontAttackIfUsing) {
-            if (mc.player.isUsingItem())
-                return false;
+        if (dontAttackIfUsing && mc.player.isUsingItem()) return false;
+
+        if (onlyWithWeapon) {
+            var stack = mc.player.getMainHandStack();
+            var item = stack.getItem();
+            boolean isWeapon = item instanceof SwordItem || item instanceof AxeItem;
+            if (!isWeapon) return false;
         }
 
         if (rayCasting) {
-            RotationService rotationService = ((AttackAuraModule) Pasxalka.getInstance().getModuleRepository().find(AttackAuraModule.class)).getRotationService();
-            BlockHitResult blockHitResult = MathVector.raycast(attackDistance, rotationService.getCurrentVector(), false);
-            EntityHitResult entityHitResult = MathVector.raycastEntity(attackDistance, rotationService.getCurrentVector(), Entity::isAlive);
+            var rotationService = RotationService.getInstance();
+            Vec3d dir = rotationService.getCurrentVector().normalize();
 
-            if (!attackThrowWall && blockHitResult.getType().equals(HitResult.Type.BLOCK)) return false;
+            var blockHit = MathVector.raycast(attackDistance, dir, false);
+            var entityHit = MathVector.raycastEntity(attackDistance, dir, e -> e.isAlive() && e == entity);
 
-            if (entityHitResult == null || entityHitResult.getEntity() == null) return false;
+            if (!attackThroughWall && blockHit != null && blockHit.getType() == HitResult.Type.BLOCK) {
+                if (entityHit == null) return false;
+                double blockDist = blockHit.getPos().distanceTo(mc.player.getEyePos());
+                double entityDist = entityHit.getPos().distanceTo(mc.player.getEyePos());
+                if (blockDist < entityDist) return false;
+            }
+
+            if (entityHit == null || entityHit.getEntity() != entity) return false;
         }
 
         if (onlyCriticals) {
             if (smartCriticals) {
-                if (mc.options.jumpKey.isPressed()) return isCritical();
-                else return true;
+                return mc.options.jumpKey.isPressed() && isCritical();
             }
-
             return isCritical();
         }
 
@@ -55,11 +71,13 @@ public record AttackConfiguration (
     }
 
     boolean isSwingCooled() {
-        return mc.player.getAttackCooldownProgress(.5f) > .9f;
+        return mc.player.getAttackCooldownProgress(1.0f) >= 1.0f;
     }
 
     boolean isCritical() {
-        return !mc.player.isOnGround() && ((AttackAuraModule) Pasxalka.getInstance().getModuleRepository().find(AttackAuraModule.class)).getFallDetector().isFalling();
+        return mc.player != null
+                && !mc.player.isOnGround()
+                && isFalling != null
+                && isFalling.getAsBoolean();
     }
-
 }

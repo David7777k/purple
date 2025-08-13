@@ -1,10 +1,5 @@
 package jaypasha.funpay.modules.more;
 
-/*
- * Create by puzatiy
- * At 03.06.2025
- */
-
 import com.google.common.eventbus.Subscribe;
 import jaypasha.funpay.Api;
 import jaypasha.funpay.Pasxalka;
@@ -26,15 +21,14 @@ import java.util.function.Predicate;
 @Getter
 public final class ModuleRepository implements Api {
 
-    List<ModuleLayer> moduleLayers = new ArrayList<>();
+    private final List<ModuleLayer> moduleLayers = new ArrayList<>();
 
     public ModuleRepository() {
         Pasxalka.getInstance().getEventBus().register(this);
     }
 
     public void init() {
-        moduleLayers.addAll(
-            List.of(
+        moduleLayers.addAll(List.of(
                 new AttackAuraModule(),
                 new SprintModule(),
                 new ArrowsModule(),
@@ -46,43 +40,56 @@ public final class ModuleRepository implements Api {
                 new NameTagsModule(),
                 new AutoTotemModule(),
                 new ESPModule()
-            )
-        );
+        ));
 
+        // Регистрируем все модули в EventBus
         moduleLayers.forEach(Pasxalka.getInstance().getEventBus()::register);
     }
 
-    public ModuleLayer find(Class<? extends ModuleLayer> clazz) {
+    /**
+     * Поиск модуля по классу с безопасным приведением типа
+     */
+    public <T extends ModuleLayer> T find(Class<T> clazz) {
         return moduleLayers.stream()
-                .filter(e -> e.getClass().equals(clazz))
+                .filter(m -> m.getClass().equals(clazz))
+                .map(clazz::cast)
                 .findFirst()
                 .orElse(null);
     }
 
+    /**
+     * Фильтрация модулей по условию
+     */
     public List<ModuleLayer> filter(Predicate<ModuleLayer> predicate) {
         return moduleLayers.stream()
                 .filter(predicate)
                 .toList();
     }
 
+    /**
+     * Выполнение действия для каждого модуля
+     */
     public void forEach(Consumer<ModuleLayer> action) {
         moduleLayers.forEach(action);
     }
 
     @Subscribe
     private void keyEventListener(KeyEvent keyEvent) {
-        moduleLayers.forEach(e -> {
-            if (keyEvent.getKey() == e.getKey() && keyEvent.getAction() == 1 && mc.currentScreen == null) {
-                e.toggleEnabled();
+        moduleLayers.forEach(module -> {
+            if (keyEvent.getKey() == module.getKey()
+                    && keyEvent.getAction() == 1
+                    && mc.currentScreen == null) {
+                module.toggleEnabled();
             }
         });
     }
 
     @Subscribe
     private void toggleEventListener(ModuleEvent.ToggleEvent toggleEvent) {
-        moduleLayers.forEach(e -> {
-            if (toggleEvent.getModuleLayer().equals(e))
-                e.toggleEnabled();
+        moduleLayers.forEach(module -> {
+            if (toggleEvent.getModuleLayer().equals(module)) {
+                module.toggleEnabled();
+            }
         });
     }
 }
