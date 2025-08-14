@@ -1,128 +1,148 @@
 package jaypasha.funpay.modules.impl.render;
 
-import com.google.common.eventbus.Subscribe;
-import jaypasha.funpay.Api;
-import jaypasha.funpay.api.events.impl.RenderEvent;
-import jaypasha.funpay.modules.more.Category;
-import jaypasha.funpay.modules.more.ModuleLayer;
-import jaypasha.funpay.modules.settings.impl.BooleanSetting;
-import jaypasha.funpay.utility.color.ColorUtility;
-import jaypasha.funpay.utility.math.MathProjection;
-import jaypasha.funpay.utility.math.MathVector;
-import jaypasha.funpay.utility.render.builders.states.QuadColorState;
-import jaypasha.funpay.utility.render.builders.states.QuadRadiusState;
-import jaypasha.funpay.utility.render.builders.states.SizeState;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.entity.state.EntityRenderState;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.Vec3d;
+import com.google.common.eventbus.Subscribe; import jaypasha.funpay.Api; import jaypasha.funpay.api.events.impl.RenderEvent; import jaypasha.funpay.modules.more.Category; import jaypasha.funpay.modules.more.ModuleLayer; import jaypasha.funpay.modules.settings.impl.BooleanSetting; import jaypasha.funpay.utility.color.ColorUtility; import jaypasha.funpay.utility.math.MathProjection; import jaypasha.funpay.utility.math.MathVector; import jaypasha.funpay.utility.render.builders.states.QuadColorState; import jaypasha.funpay.utility.render.builders.states.QuadRadiusState; import jaypasha.funpay.utility.render.builders.states.SizeState; import net.minecraft.client.gui.DrawContext; import net.minecraft.client.render.entity.state.EntityRenderState; import net.minecraft.entity.Entity; import net.minecraft.entity.player.PlayerEntity; import net.minecraft.item.ItemStack; import net.minecraft.scoreboard.Team; import net.minecraft.text.Text; import net.minecraft.util.math.Vec3d; import org.joml.Matrix4f;
 
 public class NameTagsModule extends ModuleLayer {
+
+    private final BooleanSetting armor = new BooleanSetting(Text.of("Показывать броню"), null, () -> true)
+            .register(this);
+
+    private static final int TEXT_SIZE = 6;
+    private static final float LETTER_SPACING = 0.05f;
+    private static final float BG_HEIGHT = 16.5f;
+    private static final float BG_RADIUS = 2f;
+    private static final int BG_COLOR = ColorUtility.applyOpacity(0xFF000000, 50);
+    private static final int TEXT_COLOR = 0xFFFFFFFF;
+    private static final int PADDING_X = 5;
+    private static final int GAP_PREFIX_NAME = 6;
+    private static final double TAG_Y_OFFSET = 0.5;
+    private static final double ARMOR_Y_OFFSET = 0.9;
+    private static final int ARMOR_SLOT_SIZE = 14;
 
     public NameTagsModule() {
         super(Text.of("Name Tags"), null, Category.Render);
     }
 
-    BooleanSetting armor = new BooleanSetting(Text.of("Показывать броню"), null, () -> true)
-            .register(this);
-
     @Subscribe
     public void renderLabelsReceived(RenderEvent.RenderLabelsEvent<? extends Entity, ? extends EntityRenderState> event) {
         if (!getEnabled()) return;
-
-        event.cancel();
-    }
-
-    @Subscribe
-    public void drawEvent(RenderEvent.AfterHud renderEvent) {
-        if (!getEnabled()) return;
-
-        DrawContext context = renderEvent.getContext();
-
-        mc.player.getWorld().getPlayers().forEach(e -> {
-            if (e.equals(mc.player)) return;
-
-            if (e.getScoreboardTeam() != null && e.getScoreboardTeam().getPrefix() != null && !e.getScoreboardTeam().getPrefix().getString().isEmpty()) {
-                renderNameTagWithPrefix(context, e);
-            } else {
-                renderWithoutPrefix(context, e);
-            }
-
-            if (armor.getEnabled()) {
-                renderArmorList(context, e);
-            }
-        });
-    }
-
-    public void renderArmorList(DrawContext context, PlayerEntity entity) {
-        float offset = 0f;
-
-        Vec3d projected = MathProjection.projectCoordinates(MathVector.lerpPosition(entity).add(0, entity.getHeight() + 0.9, 0));;
-
-        for (ItemStack stack : mc.player.getInventory().armor) {
-            if (stack == null || stack.isEmpty()) return;
-
-            context.drawItem(stack, (int) ((int) projected.x + offset - (mc.player.getInventory().armor.stream().filter(e -> e != null && !e.isEmpty()).count() * 7)), (int) projected.y);
-
-            offset += 14;
+        Entity entity = event.getEntity();
+        if (entity instanceof PlayerEntity) {
+            event.cancel();
         }
     }
 
-    public void renderNameTagWithPrefix(DrawContext context, PlayerEntity e) {
+    @Subscribe
+    public void drawEvent(RenderEvent.AfterHud event) {
+        if (!getEnabled() || mc.player == null || mc.world == null) return;
+
+        DrawContext ctx = event.getContext();
+        Matrix4f matrix = ctx.getMatrices().peek().getPositionMatrix();
+
+        for (PlayerEntity e : mc.world.getPlayers()) {
+            if (e.equals(mc.player)) continue;
+
+            Team team = e.getScoreboardTeam();
+            if (team != null && team.getPrefix() != null && !team.getPrefix().getString().isEmpty()) {
+                renderNameTagWithPrefix(ctx, matrix, e, team);
+            } else {
+                renderWithoutPrefix(ctx, matrix, e);
+            }
+
+            if (armor.getEnabled()) {
+                renderArmorList(ctx, matrix, e);
+            }
+        }
+    }
+
+    private void renderArmorList(DrawContext ctx, Matrix4f matrix, PlayerEntity entity) {
+        Vec3d projected = MathProjection.projectCoordinates(
+                MathVector.lerpPosition(entity).add(0, entity.getHeight() + ARMOR_Y_OFFSET, 0)
+        );
+        if (projected.z <= 0 || projected.z >= 1) return;
+
+        int nonEmpty = Math.toIntExact(
+                entity.getInventory().armor.stream().filter(s -> s != null && !s.isEmpty()).count()
+        );
+        if (nonEmpty == 0) return;
+
+        float totalWidth = nonEmpty * ARMOR_SLOT_SIZE;
+        float startX = (float) projected.x - totalWidth / 2f;
+        float y = (float) projected.y;
+
+        float x = startX;
+        for (ItemStack stack : entity.getInventory().armor) {
+            if (stack == null || stack.isEmpty()) continue;
+            ctx.drawItem(stack, Math.round(x), Math.round(y));
+            x += ARMOR_SLOT_SIZE;
+        }
+    }
+
+    private void renderNameTagWithPrefix(DrawContext ctx, Matrix4f matrix, PlayerEntity e, Team team) {
         String playerName = e.getName().getString();
-        String prefix = e.getScoreboardTeam().getPrefix().getString();
+        String prefix = team.getPrefix().getString();
 
-        int nameWidth = (int) Api.inter().getWidth(playerName, 6, 0.05f, 0);
-        int prefixWidth = mc.textRenderer.getWidth(prefix) - 5;
-        int totalWidth = prefixWidth + nameWidth + 15;
+        int nameWidth = (int) Api.inter().getWidth(playerName, TEXT_SIZE, LETTER_SPACING, 0);
+        int prefixWidth = mc.textRenderer.getWidth(prefix);
+        int totalWidth = PADDING_X + prefixWidth + GAP_PREFIX_NAME + nameWidth + PADDING_X;
 
-        Vec3d tagPosition = MathProjection.projectCoordinates(MathVector.lerpPosition(e).add(0, e.getHeight() + 0.5, 0));
+        Vec3d tagPos = MathProjection.projectCoordinates(
+                MathVector.lerpPosition(e).add(0, e.getHeight() + TAG_Y_OFFSET, 0)
+        );
+        if (tagPos.z <= 0 || tagPos.z >= 1) return;
 
-        if (tagPosition.z <= 0 || tagPosition.z >= 1) return;
+        float bgX = (float) tagPos.x - totalWidth / 2f;
+        float bgY = (float) tagPos.y - BG_HEIGHT / 2f;
 
         Api.rectangle()
-                .size(new SizeState(totalWidth, 16.5f))
-                .radius(new QuadRadiusState(1))
-                .color(new QuadColorState(ColorUtility.applyOpacity(0xFF000000, 50)))
+                .size(new SizeState(totalWidth, BG_HEIGHT))
+                .radius(new QuadRadiusState(BG_RADIUS))
+                .color(new QuadColorState(BG_COLOR))
                 .build()
-                .render(context.getMatrices().peek().getPositionMatrix(), tagPosition.getX() - ((double) totalWidth / 2), tagPosition.getY() - 5f);
+                .render(matrix, bgX, bgY);
 
-        context.drawText(mc.textRenderer, prefix, (int) (tagPosition.getX() - (double) totalWidth / 2) + 2, (int) tagPosition.getY(), -1, true);
+        int prefixX = Math.round(bgX + PADDING_X);
+        int textBaseY = Math.round((float) tagPos.y - mc.textRenderer.fontHeight / 2f);
+        ctx.drawText(mc.textRenderer, prefix, prefixX, textBaseY, 0xFFFFFFFF, true);
 
+        float nameX = bgX + PADDING_X + prefixWidth + GAP_PREFIX_NAME;
         Api.text()
-                .size(6)
-                .color(0xFFFFFFFF)
+                .size(TEXT_SIZE)
+                .color(TEXT_COLOR)
                 .text(playerName)
                 .font(Api.inter())
                 .build()
-                .render(context.getMatrices().peek().getPositionMatrix(), (int) (tagPosition.getX() + (double) (prefixWidth - nameWidth) / 2), tagPosition.y);
+                .render(matrix, nameX, (float) tagPos.y - TEXT_SIZE / 2f);
     }
 
-    public void renderWithoutPrefix(DrawContext context, PlayerEntity e) {
+    private void renderWithoutPrefix(DrawContext ctx, Matrix4f matrix, PlayerEntity e) {
         String playerName = e.getName().getString();
+        int nameWidth = (int) Api.inter().getWidth(playerName, TEXT_SIZE, LETTER_SPACING, 0);
+        int totalWidth = PADDING_X + nameWidth + PADDING_X;
 
-        int nameWidth = (int) Api.inter().getWidth(playerName, 6, 0.05f, 0);
+        Vec3d tagPos = MathProjection.projectCoordinates(
+                MathVector.lerpPosition(e).add(0, e.getHeight() + TAG_Y_OFFSET, 0)
+        );
+        if (tagPos.z <= 0 || tagPos.z >= 1) return;
 
-        Vec3d tagPosition = MathProjection.projectCoordinates(MathVector.lerpPosition(e).add(0, e.getHeight() + 0.5, 0));
-
-        if (tagPosition.z <= 0 || tagPosition.z >= 1) return;
+        float bgX = (float) tagPos.x - totalWidth / 2f;
+        float bgY = (float) tagPos.y - BG_HEIGHT / 2f;
 
         Api.rectangle()
-                .size(new SizeState(nameWidth + 10, 16.5f))
-                .radius(new QuadRadiusState(1))
-                .color(new QuadColorState(ColorUtility.applyOpacity(0xFF000000, 50)))
+                .size(new SizeState(totalWidth, BG_HEIGHT))
+                .radius(new QuadRadiusState(BG_RADIUS))
+                .color(new QuadColorState(BG_COLOR))
                 .build()
-                .render(context.getMatrices().peek().getPositionMatrix(), tagPosition.getX() - ((double) nameWidth / 2) - 5, tagPosition.getY() - 5f);
+                .render(matrix, bgX, bgY);
 
+        float nameX = (float) tagPos.x - nameWidth / 2f;
         Api.text()
-                .size(6)
-                .color(0xFFFFFFFF)
+                .size(TEXT_SIZE)
+                .color(TEXT_COLOR)
                 .font(Api.inter())
                 .text(playerName)
                 .build()
-                .render(context.getMatrices().peek().getPositionMatrix(), tagPosition.getX() - ((double) nameWidth / 2), tagPosition.getY());
+                .render(matrix, nameX, (float) tagPos.y - TEXT_SIZE / 2f);
     }
+
 }

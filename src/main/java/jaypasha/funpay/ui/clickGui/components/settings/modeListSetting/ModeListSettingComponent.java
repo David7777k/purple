@@ -7,9 +7,7 @@ import jaypasha.funpay.modules.settings.SettingLayer;
 import jaypasha.funpay.modules.settings.impl.ModeListSetting;
 import jaypasha.funpay.ui.clickGui.components.settings.SettingComponent;
 import jaypasha.funpay.ui.clickGui.components.settings.modeListSetting.window.ModeListSettingWindowComponent;
-import jaypasha.funpay.ui.clickGui.components.settings.modeSetting.ModeSettingComponent;
 import jaypasha.funpay.utility.color.ColorUtility;
-import jaypasha.funpay.utility.math.Math;
 import jaypasha.funpay.utility.render.builders.states.QuadColorState;
 import jaypasha.funpay.utility.render.builders.states.QuadRadiusState;
 import jaypasha.funpay.utility.render.builders.states.SizeState;
@@ -18,37 +16,39 @@ import jaypasha.funpay.utility.windows.WindowLayer;
 import jaypasha.funpay.utility.windows.WindowRepository;
 import net.minecraft.client.gui.DrawContext;
 
-import java.util.Objects;
 import java.util.function.Supplier;
 
 public class ModeListSettingComponent extends SettingComponent {
 
-    Supplier<ModeListSetting> modeListSetting = Suppliers.memoize(() -> (ModeListSetting) getSettingLayer());
-
-    WindowLayer windowLayer;
+    private final Supplier<ModeListSetting> modeListSetting = Suppliers.memoize(() -> (ModeListSetting) getSettingLayer());
+    private final WindowLayer windowLayer;
 
     public ModeListSettingComponent(SettingLayer settingLayer) {
         super(settingLayer);
-
-        windowLayer = new ModeListSettingWindowComponent(modeListSetting.get());
+        this.windowLayer = new ModeListSettingWindowComponent(modeListSetting.get());
     }
 
     @Override
     public void init() {
-        String descriptionText = MsdfUtil.cutString(getSettingLayer().getDescription().getString(), 6, 240f / 2 - 10 - windowLayer.getWidth() - 10);
-
         windowLayer.init();
-        windowLayer.position(getX() + getWidth() - windowLayer.getWidth(), getY() + getHeight() / 2);
 
-        float moduleNameHeight = Api.inter().getHeight(getSettingLayer().getName().getString(), 7);
-        float descriptionHeight = Api.inter().getHeight(descriptionText, 6);
+        float contentWidth = 240f / 2 - 10;
+        float nameH = Api.inter().getHeight(getSettingLayer().getName().getString(), 7);
 
-        size(240f / 2 - 10, moduleNameHeight + 5 + descriptionHeight);
+        float descriptionWrap = Math.max(0f, contentWidth - windowLayer.getWidth() - 10f);
+        String descriptionText = MsdfUtil.cutString(getSettingLayer().getDescription().getString(), 6, descriptionWrap);
+        float descH = Api.inter().getHeight(descriptionText, 6);
+
+        size(contentWidth, nameH + 5 + descH);
     }
 
     @Override
-    public ModeSettingComponent render(DrawContext context, int mouseX, int mouseY, float delta) {
-        String descriptionText = MsdfUtil.cutString(getSettingLayer().getDescription().getString(), 6, 240f / 2 - 10 - windowLayer.getWidth() - 10);
+    public ModeListSettingComponent render(DrawContext context, int mouseX, int mouseY, float delta) {
+        // Обновляем позицию окна на каждый кадр — чтобы оно «следовало» за компонентом
+        windowLayer.position(getX() + getWidth() - windowLayer.getWidth(), getY() + getHeight() / 2f);
+
+        float dynamicWrap = Math.max(0f, getWidth() - windowLayer.getWidth() - 10f);
+        String descriptionText = MsdfUtil.cutString(getSettingLayer().getDescription().getString(), 6, dynamicWrap);
 
         Api.text()
                 .size(7)
@@ -58,22 +58,31 @@ public class ModeListSettingComponent extends SettingComponent {
                 .build()
                 .render(context.getMatrices().peek().getPositionMatrix(), getX(), getY() - 1);
 
-        if (!descriptionText.isEmpty())
+        if (!descriptionText.isEmpty()) {
             Api.text()
-                .size(6)
-                .color(ColorUtility.applyOpacity(0xFFFFFFFF, 50))
-                .text(descriptionText)
-                .font(Api.inter())
-                .build()
-                .render(context.getMatrices().peek().getPositionMatrix(), getX(), getY() + Api.inter().getHeight(getSettingLayer().getName().getString(), 7) + 4);
+                    .size(6)
+                    .color(ColorUtility.applyOpacity(0xFFFFFFFF, 50))
+                    .text(descriptionText)
+                    .font(Api.inter())
+                    .build()
+                    .render(context.getMatrices().peek().getPositionMatrix(),
+                            getX(),
+                            getY() + Api.inter().getHeight(getSettingLayer().getName().getString(), 7) + 4);
+        }
 
-        String valueText = modeListSetting.get().empty() || modeListSetting.get().emptySelected() ? "N/A" : modeListSetting.get().getSelected().getFirst();
+        String valueText = modeListSetting.get().empty() || modeListSetting.get().emptySelected()
+                ? "N/A"
+                : modeListSetting.get().getSelected().getFirst();
         float valueWidth = Api.inter().getWidth(valueText, 6) + 10;
+
+        boolean hovered = jaypasha.funpay.utility.math.Math.isHover(
+                mouseX, mouseY, getX() + getWidth() - valueWidth, getY(), valueWidth, 9
+        );
 
         Api.rectangle()
                 .radius(new QuadRadiusState(2))
                 .size(new SizeState(valueWidth, 9))
-                .color(new QuadColorState(ColorUtility.applyOpacity(0xFFFFFFFF, 10)))
+                .color(new QuadColorState(ColorUtility.applyOpacity(0xFFFFFFFF, hovered ? 20 : 10)))
                 .build()
                 .render(context.getMatrices().peek().getPositionMatrix(), getX() + getWidth() - valueWidth, getY());
 
@@ -83,21 +92,20 @@ public class ModeListSettingComponent extends SettingComponent {
                 .text(valueText)
                 .font(Api.inter())
                 .build()
-                .render(context.getMatrices().peek().getPositionMatrix(), getX() + getWidth() - valueWidth + 5, getY() + .5);
+                .render(context.getMatrices().peek().getPositionMatrix(), getX() + getWidth() - valueWidth + 5, getY() + 0.5f);
 
-        return null;
+        return this;
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         WindowRepository windowRepository = Pasxalka.getInstance().getClickGuiScreen().getWindowRepository();
-
-        if (Math.isHover(mouseX, mouseY, getX(), getY(), getWidth(), getHeight()) && !windowRepository.contains(windowLayer)) {
+        if (jaypasha.funpay.utility.math.Math.isHover(mouseX, mouseY, getX(), getY(), getWidth(), getHeight()) && !windowRepository.contains(windowLayer)) {
+            // На всякий случай обновим позицию перед пушем
+            windowLayer.position(getX() + getWidth() - windowLayer.getWidth(), getY() + getHeight() / 2f);
             windowRepository.push(windowLayer);
-
             return true;
         }
-
         return super.mouseClicked(mouseX, mouseY, button);
     }
 }

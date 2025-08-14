@@ -1,31 +1,14 @@
 package jaypasha.funpay.modules.impl.render;
 
-import com.google.common.eventbus.Subscribe;
-import com.mojang.blaze3d.systems.RenderSystem;
-import jaypasha.funpay.Api;
-import jaypasha.funpay.api.events.impl.RenderEvent;
-import jaypasha.funpay.modules.more.Category;
-import jaypasha.funpay.modules.more.ModuleLayer;
-import jaypasha.funpay.utility.color.ColorUtility;
-import jaypasha.funpay.utility.math.MathProjection;
-import jaypasha.funpay.utility.math.MathVector;
-import jaypasha.funpay.utility.render.utility.VertexUtils;
-import net.minecraft.client.render.*;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.projectile.ProjectileEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.ColorHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.RaycastContext;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
+import com.google.common.eventbus.Subscribe; import jaypasha.funpay.Api; import jaypasha.funpay.api.events.impl.RenderEvent; import jaypasha.funpay.modules.more.Category; import jaypasha.funpay.modules.more.ModuleLayer; import jaypasha.funpay.utility.color.ColorUtility; import jaypasha.funpay.utility.math.MathProjection; import jaypasha.funpay.utility.math.MathVector; import jaypasha.funpay.utility.render.utility.VertexUtils; import net.minecraft.client.render.VertexConsumer; import net.minecraft.client.render.VertexConsumerProvider; import net.minecraft.client.util.math.MatrixStack; import net.minecraft.entity.Entity; import net.minecraft.entity.projectile.ProjectileEntity; import net.minecraft.text.Text; import net.minecraft.util.hit.BlockHitResult; import net.minecraft.util.hit.HitResult; import net.minecraft.util.math.ColorHelper; import net.minecraft.util.math.Vec3d; import net.minecraft.world.RaycastContext;
 
 public class ProjectilePredictModule extends ModuleLayer {
+
+    // Параметры визуала
+    private static final int COLOR_START = ColorUtility.applyOpacity(0xFFFFFFFF, 0);   // прозрачное начало
+    private static final int COLOR_END   = 0xFFFF0000;                                  // красный конец
+    private static final int MAX_STEPS   = 160;                                        // максимум итераций
+    private static final double MAX_DIST_SQ = 128 * 128;                               // ограничение по дистанции (мир)
 
     public ProjectilePredictModule() {
         super(Text.of("Projectile Predict"), null, Category.Render);
@@ -33,75 +16,109 @@ public class ProjectilePredictModule extends ModuleLayer {
 
     @Subscribe
     public void renderEvent(RenderEvent.AfterHand event) {
-        if (!getEnabled()) return;
+        if (!getEnabled() || mc.world == null || mc.player == null) return;
 
-        MatrixStack matrices = event.getStack();
+        MatrixStack ms = event.getStack();
+        Vec3d cam = mc.gameRenderer.getCamera().getPos();
 
-        Vec3d cameraPos = mc.gameRenderer.getCamera().getPos();
-
-        matrices.push();
-        matrices.translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
+        ms.push();
+        ms.translate(-cam.x, -cam.y, -cam.z);
+        final var matrix = ms.peek().getPositionMatrix();
 
         VertexConsumerProvider.Immediate immediate = mc.getBufferBuilders().getEntityVertexConsumers();
-        VertexConsumer vertexConsumer = immediate.getBuffer(VertexUtils.LINES);
+        VertexConsumer vc = immediate.getBuffer(VertexUtils.LINES);
 
-        for (Entity entity : mc.world.getEntities()) {
-            if (!(entity instanceof ProjectileEntity)) continue;
+        for (Entity e : mc.world.getEntities()) {
+            if (!(e instanceof ProjectileEntity proj) || !e.isAlive()) continue;
+            if (proj.squaredDistanceTo(cam) > MAX_DIST_SQ) continue;
 
-            AtomicReference<Vec3d> prev = new AtomicReference<>(entity.getPos());
-            List<Vec3d> list = calcTrajectory((ProjectileEntity) entity);
-            list.forEach(e -> {
-                int color = ColorHelper.lerp(Math.clamp((float) list.indexOf(e) / list.size(), 0f, 1f), ColorUtility.applyOpacity(0xFFFFFFFF, 0), 0xFFFF0000);
-
-                vertexConsumer.vertex(matrices.peek().getPositionMatrix(), (float) prev.get().getX(), (float) prev.get().getY(), (float) prev.get().getZ())
-                        .color(color)
-                        .normal(0,1,0);
-
-                vertexConsumer.vertex(matrices.peek().getPositionMatrix(), (float) e.getX(), (float) e.getY(), (float) e.getZ())
-                        .color(color)
-                        .normal(0,1,0);
-
-                prev.set(e);
-            });
+            renderTrajectory(proj, vc, matrix);
         }
 
-        immediate.drawCurrentLayer();
-        matrices.pop();
+        // Полный flush, чтобы гарантированно вывести слой
+        immediate.draw();
+        ms.pop();
     }
 
-    public List<Vec3d> calcTrajectory(ProjectileEntity entity) {
-        List<Vec3d> out = new ArrayList<>();
-
+    private void renderTrajectory(ProjectileEntity entity, VertexConsumer vc, org.joml.Matrix4f matrix) {
+        // Локальные копии, чтобы не мутировать сущность
         Vec3d vel = entity.getVelocity();
         Vec3d pos = entity.getPos();
 
+        if (vel.equals(Vec3d.ZERO)) return;
+
         final double gravity = entity.getFinalGravity();
-        final double drag = entity.isTouchingWater() ? .8f : .99f;
+        final double drag = entity.isTouchingWater() ? 0.8 : 0.99;
 
-        if (entity.getVelocity().equals(Vec3d.ZERO)) return List.of();
+        // Будем рисовать отрезки prev -> curr, без промежуточного списка
+        Vec3d prev = pos;
+        int step = 0;
 
-        for (int i = 0; i < 150; i++) {
-            out.add(pos);
-
-            Vec3d next = pos.add(vel);
+        while (step < MAX_STEPS) {
+            Vec3d nextPos = pos.add(vel);
 
             BlockHitResult blockHit = mc.world.raycast(new RaycastContext(
-                    pos, next,
+                    pos, nextPos,
                     RaycastContext.ShapeType.COLLIDER,
                     RaycastContext.FluidHandling.NONE,
                     entity
             ));
 
-            if (blockHit.getType() != HitResult.Type.MISS) {
-                out.add(blockHit.getPos());
-                break;
-            }
+            boolean hit = blockHit.getType() != HitResult.Type.MISS;
+            Vec3d curr = hit ? blockHit.getPos() : nextPos;
 
-            pos = next;
-            vel = vel.multiply(drag);
-            vel = vel.subtract(0, gravity, 0);
+            // Градиент по шагам (0..1)
+            float t = clamp01((float) step / (float) MAX_STEPS);
+            int color = lerpArgb(t, COLOR_START, COLOR_END);
+
+            // Вершина A
+            vc.vertex(matrix, (float) prev.x, (float) prev.y, (float) prev.z)
+                    .color(color)
+                    .normal(0, 1, 0);
+            // Вершина B
+            vc.vertex(matrix, (float) curr.x, (float) curr.y, (float) curr.z)
+                    .color(color)
+                    .normal(0, 1, 0);
+
+            if (hit) break;
+            if (prev.squaredDistanceTo(curr) < 1.0e-6) break;         // защита от залипания
+            if (entity.squaredDistanceTo(curr) > MAX_DIST_SQ) break;   // ограничение по дистанции
+
+            // Следующий шаг интеграции
+            pos = curr;
+            vel = vel.multiply(drag).subtract(0, gravity, 0);
+
+            prev = curr;
+            step++;
         }
-
-        return out;
     }
+
+// ——— Утилиты ———
+
+    private static float clamp01(float v) {
+        return v < 0f ? 0f : (v > 1f ? 1f : v);
+    }
+
+    // Лерп ARGB с учётом альфы (использует ColorHelper)
+    private static int lerpArgb(float t, int a, int b) {
+        // В новых версиях есть ColorHelper.Argb.lerp(t, a, b).
+        // Делаем совместимо:
+        int aa = (a >>> 24) & 0xFF;
+        int ar = (a >>> 16) & 0xFF;
+        int ag = (a >>> 8)  & 0xFF;
+        int ab = (a)        & 0xFF;
+
+        int ba = (b >>> 24) & 0xFF;
+        int br = (b >>> 16) & 0xFF;
+        int bg = (b >>> 8)  & 0xFF;
+        int bb = (b)        & 0xFF;
+
+        int ca = aa + Math.round((ba - aa) * t);
+        int cr = ar + Math.round((br - ar) * t);
+        int cg = ag + Math.round((bg - ag) * t);
+        int cb = ab + Math.round((bb - ab) * t);
+
+        return (ca << 24) | (cr << 16) | (cg << 8) | cb;
+    }
+
 }

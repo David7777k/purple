@@ -49,6 +49,7 @@ public class RenderEvent extends EventLayer {
     @Getter
     @AllArgsConstructor
     public static class RenderLabelsEvent<T extends Entity, S extends EntityRenderState> extends RenderEvent {
+        T entity;
         S state;
     }
 

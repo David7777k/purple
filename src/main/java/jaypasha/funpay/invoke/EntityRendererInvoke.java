@@ -14,14 +14,18 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(EntityRenderer.class)
-public class EntityRendererInvoke<T extends Entity, S extends EntityRenderState> {
+public abstract class EntityRendererInvoke<T extends Entity, S extends EntityRenderState> {
+
+    protected abstract T getEntity(S state);
 
     @Inject(method = "renderLabelIfPresent", at = @At("HEAD"), cancellable = true)
     private void renderLabelIfPresentInvoke(S state, Text text, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, CallbackInfo ci) {
-        RenderEvent.RenderLabelsEvent<T, S> renderLabelsEvent = new RenderEvent.RenderLabelsEvent<>(state);
+        T entity = this.getEntity(state);
+        RenderEvent.RenderLabelsEvent<T, S> renderLabelsEvent = new RenderEvent.RenderLabelsEvent<>(entity, state);
         EventManager.call(renderLabelsEvent);
 
-        if (renderLabelsEvent.isCanceled()) ci.cancel();
+        if (renderLabelsEvent.isCanceled()) {
+            ci.cancel();
+        }
     }
-
 }

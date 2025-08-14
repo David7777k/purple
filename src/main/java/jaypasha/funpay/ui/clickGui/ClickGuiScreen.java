@@ -9,7 +9,6 @@ import jaypasha.funpay.api.animations.implement.DecelerateAnimation;
 import jaypasha.funpay.api.events.impl.KeyEvent;
 import jaypasha.funpay.ui.clickGui.components.panel.PanelsLayer;
 import jaypasha.funpay.ui.clickGui.components.search.SearchComponent;
-import jaypasha.funpay.ui.clickGui.components.search.SearchSource;
 import jaypasha.funpay.utility.windows.WindowRepository;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -52,8 +51,8 @@ public class ClickGuiScreen extends Screen implements Api {
         super(Text.of("pasxalka.click_gui"));
 
         componentsList.addAll(List.of(
-            panelsLayer,
-            searchComponent
+                panelsLayer,
+                searchComponent
         ));
 
         Pasxalka.getInstance().getEventBus().register(this);
@@ -93,7 +92,7 @@ public class ClickGuiScreen extends Screen implements Api {
 
         scale(context.getMatrices(), x.get() + width / 2, y.get() + height / 2, animation.getOutput().floatValue(), () -> {
             componentsList.forEach(e -> e.render(context, mouseX, mouseY, delta));
-            windowRepository.render(context, mouseX,mouseY, delta);
+            windowRepository.render(context, mouseX, mouseY, delta);
         });
 
         super.render(context, mouseX, mouseY, delta);
@@ -131,7 +130,8 @@ public class ClickGuiScreen extends Screen implements Api {
 
     @Override
     public boolean keyReleased(int keyCode, int scanCode, int modifiers) {
-        if (!windowRepository.keyPressed(keyCode, scanCode, modifiers))
+        // фикс: раньше тут ошибочно вызывали keyPressed(...)
+        if (!windowRepository.keyReleased(keyCode, scanCode, modifiers))
             componentsList.forEach(e -> e.keyReleased(keyCode, scanCode, modifiers));
 
         return super.keyReleased(keyCode, scanCode, modifiers);
@@ -140,7 +140,6 @@ public class ClickGuiScreen extends Screen implements Api {
     @Override
     public boolean charTyped(char chr, int modifiers) {
         componentsList.forEach(e -> e.charTyped(chr, modifiers));
-
         return super.charTyped(chr, modifiers);
     }
 

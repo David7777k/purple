@@ -22,33 +22,35 @@ import java.util.function.Supplier;
 
 public class ModeSettingComponent extends SettingComponent {
 
-    Supplier<ModeSetting> modeSetting = Suppliers.memoize(() -> (ModeSetting) getSettingLayer());
-
-    WindowLayer windowLayer;
+    private final Supplier<ModeSetting> modeSetting = Suppliers.memoize(() -> (ModeSetting) getSettingLayer());
+    private final WindowLayer windowLayer;
 
     public ModeSettingComponent(SettingLayer settingLayer) {
         super(settingLayer);
-
-        windowLayer = new ModeSettingWindowComponent(modeSetting.get());
+        this.windowLayer = new ModeSettingWindowComponent(modeSetting.get());
     }
 
     @Override
     public void init() {
-        String descriptionText = MsdfUtil.cutString(getSettingLayer().getDescription().getString(), 6, 240f / 2 - 10 - windowLayer.getWidth() - 10);
-
         windowLayer.init();
-        windowLayer.position(getX() + getWidth() - windowLayer.getWidth(), getY() + getHeight() / 2);
 
-        float moduleNameHeight = Api.inter().getHeight(getSettingLayer().getName().getString(), 7);
-        float descriptionHeight = Api.inter().getHeight(descriptionText, 6);
+        // В init ещё нет «живой» ширины, поэтому используем базовую константу
+        float contentWidth = 240f / 2 - 10;
+        float nameH = Api.inter().getHeight(getSettingLayer().getName().getString(), 7);
 
-        size(240f / 2 - 10, moduleNameHeight + 5 + descriptionHeight);
+        float wrap = Math.max(0f, contentWidth - windowLayer.getWidth() - 10f);
+        String descriptionText = MsdfUtil.cutString(getSettingLayer().getDescription().getString(), 6, wrap);
+        float descH = Api.inter().getHeight(descriptionText, 6);
+
+        size(contentWidth, nameH + 5 + descH);
     }
 
     @Override
     public ModeSettingComponent render(DrawContext context, int mouseX, int mouseY, float delta) {
-        String descriptionText = MsdfUtil.cutString(getSettingLayer().getDescription().getString(), 6, 240f / 2 - 10 - windowLayer.getWidth() - 10);
+        // Актуализируем позицию окна каждый кадр
+        windowLayer.position(getX() + getWidth() - windowLayer.getWidth(), getY() + getHeight() / 2f);
 
+        // Name
         Api.text()
                 .size(7)
                 .color(ColorUtility.applyOpacity(0xFFFFFFFF, 95))
@@ -57,22 +59,30 @@ public class ModeSettingComponent extends SettingComponent {
                 .build()
                 .render(context.getMatrices().peek().getPositionMatrix(), getX(), getY() - 1);
 
-        if (!descriptionText.isEmpty())
+        // Description (c «живой» шириной)
+        float wrap = Math.max(0f, getWidth() - windowLayer.getWidth() - 10f);
+        String description = MsdfUtil.cutString(getSettingLayer().getDescription().getString(), 6, wrap);
+        if (!description.isEmpty()) {
             Api.text()
-                .size(6)
-                .color(ColorUtility.applyOpacity(0xFFFFFFFF, 50))
-                .text(descriptionText)
-                .font(Api.inter())
-                .build()
-                .render(context.getMatrices().peek().getPositionMatrix(), getX(), getY() + Api.inter().getHeight(getSettingLayer().getName().getString(), 7) + 4);
+                    .size(6)
+                    .color(ColorUtility.applyOpacity(0xFFFFFFFF, 50))
+                    .text(description)
+                    .font(Api.inter())
+                    .build()
+                    .render(context.getMatrices().peek().getPositionMatrix(),
+                            getX(),
+                            getY() + Api.inter().getHeight(getSettingLayer().getName().getString(), 7) + 4);
+        }
 
-        String valueText = modeSetting.get().getValue() == null ? "N/A" : modeSetting.get().getValue();
+        // Value box with hover effect
+        String valueText = Objects.requireNonNullElse(modeSetting.get().getValue(), "N/A");
         float valueWidth = Api.inter().getWidth(valueText, 6) + 10;
+        boolean hovered = Math.isHover(mouseX, mouseY, getX() + getWidth() - valueWidth, getY(), valueWidth, 9);
 
         Api.rectangle()
                 .radius(new QuadRadiusState(2))
                 .size(new SizeState(valueWidth, 9))
-                .color(new QuadColorState(ColorUtility.applyOpacity(0xFFFFFFFF, 10)))
+                .color(new QuadColorState(ColorUtility.applyOpacity(0xFFFFFFFF, hovered ? 20 : 10)))
                 .build()
                 .render(context.getMatrices().peek().getPositionMatrix(), getX() + getWidth() - valueWidth, getY());
 
@@ -82,21 +92,24 @@ public class ModeSettingComponent extends SettingComponent {
                 .text(valueText)
                 .font(Api.inter())
                 .build()
-                .render(context.getMatrices().peek().getPositionMatrix(), getX() + getWidth() - valueWidth + 5, getY() + .5);
+                .render(context.getMatrices().peek().getPositionMatrix(),
+                        getX() + getWidth() - valueWidth + 5, getY() + 0.5f);
 
-        return null;
+        return this;
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        WindowRepository windowRepository = Pasxalka.getInstance().getClickGuiScreen().getWindowRepository();
+        WindowRepository repo = Pasxalka.getInstance().getClickGuiScreen().getWindowRepository();
 
-        if (Math.isHover(mouseX, mouseY, getX(), getY(), getWidth(), getHeight()) && !windowRepository.contains(windowLayer)) {
-            windowRepository.push(windowLayer);
-
+        if (Math.isHover(mouseX, mouseY, getX(), getY(), getWidth(), getHeight())) {
+            if (!repo.contains(windowLayer)) {
+                // Подстрахуемся положением
+                windowLayer.position(getX() + getWidth() - windowLayer.getWidth(), getY() + getHeight() / 2f);
+                repo.push(windowLayer);
+            }
             return true;
         }
-
         return super.mouseClicked(mouseX, mouseY, button);
     }
 }

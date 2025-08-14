@@ -23,10 +23,11 @@ public class ModeSettingValueComponent extends Component {
     @Override
     public ModeSettingValueComponent render(DrawContext context, int mouseX, int mouseY, float delta) {
         float animationValue = setting.getAnimation().getOutput().floatValue();
+        boolean selected = value.equals(setting.getValue());
 
         Api.rectangle()
                 .size(new SizeState(getWidth(), getHeight()))
-                .color(new QuadColorState(ColorUtility.applyOpacity(0xFF000000, setting.equals(value) ? (int) (60 * animationValue) : 0)))
+                .color(new QuadColorState(ColorUtility.applyOpacity(0xFF000000, selected ? (int) (60 * animationValue) : 0)))
                 .radius(new QuadRadiusState(2))
                 .build()
                 .render(context.getMatrices().peek().getPositionMatrix(), getX(), getY());
@@ -35,7 +36,7 @@ public class ModeSettingValueComponent extends Component {
                 .font(Api.inter())
                 .size(8)
                 .text(value)
-                .color(ColorUtility.applyOpacity(0xFFFFFFFF, (int) (setting.equals(value) ? 50 + (50 * animationValue) : 50)))
+                .color(ColorUtility.applyOpacity(0xFFFFFFFF, (int) (selected ? 50 + (50 * animationValue) : 50)))
                 .build()
                 .render(context.getMatrices().peek().getPositionMatrix(), getX() + 5, getY() + Api.inter().getHeight(value, 8) / 4);
 
@@ -43,11 +44,11 @@ public class ModeSettingValueComponent extends Component {
                 .text("B")
                 .size(7)
                 .font(Api.icons())
-                .color(ColorUtility.applyOpacity(0xFFFFFFFF, setting.equals(value) ? (int) (100 * animationValue) : 0))
+                .color(ColorUtility.applyOpacity(0xFFFFFFFF, selected ? (int) (100 * animationValue) : 0))
                 .build()
                 .render(context.getMatrices().peek().getPositionMatrix(), getX() + getWidth() - 7 - 5, getY() - .5f + (getHeight() - 7) / 2);
 
-        return null;
+        return this;
     }
 
     @Override
@@ -55,7 +56,6 @@ public class ModeSettingValueComponent extends Component {
         if (Math.isHover(mouseX, mouseY, getX(), getY(), getWidth(), getHeight())) {
             setting.set(value);
         }
-
         return super.mouseClicked(mouseX, mouseY, button);
     }
 }

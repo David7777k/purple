@@ -1,106 +1,137 @@
 package jaypasha.funpay.ui.clickGui.components.panel;
 
+import jaypasha.funpay.Api;
 import jaypasha.funpay.modules.more.Category;
 import jaypasha.funpay.ui.clickGui.Component;
 import jaypasha.funpay.ui.clickGui.Helper;
 import jaypasha.funpay.ui.clickGui.components.BackgroundComponent;
 import jaypasha.funpay.ui.clickGui.components.module.ModuleLayerComponent;
 import jaypasha.funpay.ui.clickGui.components.search.SearchComponent;
+import jaypasha.funpay.utility.color.ColorUtility;
 import jaypasha.funpay.utility.math.Math;
+import jaypasha.funpay.utility.render.builders.states.QuadColorState;
+import jaypasha.funpay.utility.render.builders.states.QuadRadiusState;
+import jaypasha.funpay.utility.render.builders.states.SizeState;
 import jaypasha.funpay.utility.render.utility.Scissors;
-import lombok.AccessLevel;
-import lombok.experimental.FieldDefaults;
-import lombok.experimental.NonFinal;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.util.math.MathHelper;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
-import static java.lang.Math.*;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 
-@FieldDefaults(level = AccessLevel.PRIVATE)
 public class PanelComponent extends Component {
 
-    @NonFinal
-    List<ModuleLayerComponent> componentsList = new ArrayList<>();
+    private List<ModuleLayerComponent> componentsList = new ArrayList<>();
+    private final BackgroundComponent backgroundComponent;
 
-    BackgroundComponent backgroundComponent;
+    private float scroll = 0f;
+    private float animationScroll = 0f;
 
-    @NonFinal
-    float scroll = 0f, animationScroll = 0f;
+    private final Category category;
 
-    Category category;
+    // визуальные константы
+    private static final float PADDING_X = 2.5f;
+    private static final float HEADER_H = 32f;
+    private static final float BOTTOM_PAD = 14.5f;
+    private static final float ITEM_WIDTH = 240f / 2f;
+    private static final float ITEM_SPACING = 2.5f;
+    private static final float MIN_ITEM_H = 20f;
 
     public PanelComponent(Category category) {
         this.category = category;
-        backgroundComponent = new BackgroundComponent(category);
-
+        this.backgroundComponent = new BackgroundComponent(category);
         init();
     }
 
     @Override
     public void init() {
-        // Получаем все модули для категории (Helper.moduleLayers(category) — метод с одним параметром)
+        // подготавливаем список модулей с учётом поиска
+        final String search = SearchComponent.getSearchSource().get().getText().toString().toLowerCase();
         List<ModuleLayerComponent> all = Helper.moduleLayers(category);
 
-        // Берём поисковую строку один раз (оптимизация)
-        String search = SearchComponent.getSearchSource().get().getText().toString().toLowerCase();
-
-        // Фильтруем по началу названия
         componentsList = all.stream()
-                .filter(e -> e.getModuleLayer().getModuleName().getString().toLowerCase().startsWith(search))
+                .filter(e -> {
+                    String name = e.getModuleLayer().getModuleName().getString().toLowerCase();
+                    return search.isEmpty() || name.contains(search);
+                })
                 .toList();
+
+        componentsList.forEach(m -> {
+            try { m.init(); } catch (Exception ignored) {}
+        });
+
+        // сброс скролла при смене списка
+        scroll = animationScroll = 0f;
     }
 
     @Override
     public PanelComponent render(DrawContext context, int mouseX, int mouseY, float delta) {
-        animationScroll = MathHelper.lerp(.02f, animationScroll, scroll);
-
+        // фон/каркас панели
         backgroundComponent.position(getX(), getY()).size(getWidth(), getHeight()).render(context, mouseX, mouseY, delta);
 
-        // Scissors для обрезки содержимого панели
-        Scissors.push(getX() + 2.5f, getY() + 32, getWidth() - 5, getHeight() - 32 - 14.5f);
+        // сглаживание скролла
+        animationScroll = MathHelper.lerp(0.15f, animationScroll, scroll);
 
-        AtomicReference<Float> offset = new AtomicReference<>(0f);
-        AtomicReference<Float> totalContentHeight = new AtomicReference<>(0f);
+        // видимая область контента
+        final float contentX = getX() + PADDING_X;
+        final float contentY = getY() + HEADER_H;
+        final float visibleW = getWidth() - PADDING_X * 2f;
+        final float visibleH = getHeight() - HEADER_H - BOTTOM_PAD;
+
+        // клип
+        Scissors.push(contentX, contentY, visibleW, visibleH);
+
+        float yOffset = 0f;
+        float contentHeight = 0f;
 
         for (ModuleLayerComponent e : componentsList) {
-            // Инициализируем компоненты настроек безопасно
-            e.getComponents().forEach(component -> {
-                try {
-                    component.init();
-                } catch (Exception ex) {
-                    System.err.println("Failed to initialize setting component: " + ex.getMessage());
-                }
-            });
+            float moduleHeight = max(MIN_ITEM_H, e.getTotalHeight());
+            float y = contentY + yOffset + animationScroll;
 
-            // Получаем текущую высоту модуля (учёт анимации открытия настроек)
-            float moduleHeight = Math.max(20f, e.getTotalHeight());
+            e.position(contentX, y).size(ITEM_WIDTH, moduleHeight);
 
-            // Позиционируем модуль; ширина фиксирована (240/2)
-            e.position(getX() + 2.5f, getY() + 32 + offset.get() + animationScroll)
-                    .size(240f / 2, moduleHeight);
-
-            // Рендерим модуль
             try {
                 e.render(context, mouseX, mouseY, delta);
             } catch (Exception ex) {
                 System.err.println("Failed to render module: " + e.getModuleLayer().getModuleName().getString() + " - " + ex.getMessage());
             }
 
-            // Обновляем оффсет и суммарную высоту
-            float moduleSpacing = moduleHeight + 2.5f;
-            offset.set(offset.get() + moduleSpacing);
-            totalContentHeight.set(totalContentHeight.get() + moduleSpacing);
+            yOffset += moduleHeight + ITEM_SPACING;
+            contentHeight += moduleHeight + ITEM_SPACING;
         }
 
         Scissors.pop();
 
-        // Обновляем границы скролла на основе реального размера контента
-        float maxScroll = min(getHeight() - totalContentHeight.get() - 45.5f, 0);
-        scroll = clamp(scroll, maxScroll, 0);
+        // корректные границы скролла: minScroll <= scroll <= 0
+        float minScroll = min(0f, visibleH - contentHeight);
+        scroll = MathHelper.clamp(scroll, minScroll, 0f);
+
+        // индикатор скролла
+        if (contentHeight > visibleH) {
+            float ratio = visibleH / contentHeight;
+            float thumbH = Math.max(18f, visibleH * ratio);
+            float progress = (-animationScroll) / (contentHeight - visibleH);
+            float thumbY = contentY + (visibleH - thumbH) * MathHelper.clamp(progress, 0f, 1f);
+
+            // трек
+            Api.rectangle()
+                    .size(new SizeState(2f, visibleH))
+                    .radius(new QuadRadiusState(1f))
+                    .color(new QuadColorState(ColorUtility.applyOpacity(0xFFFFFFFF, 10)))
+                    .build()
+                    .render(context.getMatrices().peek().getPositionMatrix(), getX() + getWidth() - 4f, contentY);
+
+            // ползунок
+            Api.rectangle()
+                    .size(new SizeState(2f, thumbH))
+                    .radius(new QuadRadiusState(1f))
+                    .color(new QuadColorState(ColorUtility.applyOpacity(0xFFFFFFFF, 45)))
+                    .build()
+                    .render(context.getMatrices().peek().getPositionMatrix(), getX() + getWidth() - 4f, thumbY);
+        }
 
         return this;
     }
@@ -108,14 +139,10 @@ public class PanelComponent extends Component {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (Math.isHover(mouseX, mouseY, getX(), getY(), getWidth(), getHeight())) {
-            // Обрабатываем клики по модулям
             for (ModuleLayerComponent component : componentsList) {
-                if (component.mouseClicked(mouseX, mouseY, button)) {
-                    return true; // Останавливаем обработку если клик был обработан
-                }
+                if (component.mouseClicked(mouseX, mouseY, button)) return true;
             }
         }
-
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
@@ -127,9 +154,12 @@ public class PanelComponent extends Component {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        if (Math.isHover(mouseX, mouseY, getX(), getY(), getWidth(), getHeight()))
-            scroll += verticalAmount * 10f;
-
+        if (Math.isHover(mouseX, mouseY, getX(), getY(), getWidth(), getHeight())) {
+            // чуть более отзывчивый скролл
+            scroll += (float) (verticalAmount * 18f);
+            // не возвращаем сразу true, чтобы внутренний модуль мог прокручивать свою область,
+            // но базовый Screen уже считает событие обработанным
+        }
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
     }
 
@@ -145,19 +175,15 @@ public class PanelComponent extends Component {
         return super.keyReleased(keyCode, scanCode, modifiers);
     }
 
-    /**
-     * Закрывает все открытые настройки модулей в этой панели
-     */
     public void closeAllSettings() {
         componentsList.forEach(ModuleLayerComponent::closeSettings);
     }
 
-    /**
-     * Возвращает общую высоту всех модулей (для расчета скролла)
-     */
     public float getTotalContentHeight() {
-        return componentsList.stream()
-                .map(ModuleLayerComponent::getTotalHeight)
-                .reduce(0f, Float::sum) + (componentsList.size() - 1) * 2.5f;
+        float h = 0f;
+        for (ModuleLayerComponent m : componentsList) {
+            h += max(MIN_ITEM_H, m.getTotalHeight()) + ITEM_SPACING;
+        }
+        return Math.max(0f, h - ITEM_SPACING);
     }
 }

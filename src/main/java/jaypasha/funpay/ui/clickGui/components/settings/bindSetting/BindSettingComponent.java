@@ -15,14 +15,27 @@ import jaypasha.funpay.utility.render.utility.MsdfUtil;
 import net.minecraft.client.gui.DrawContext;
 import org.lwjgl.glfw.GLFW;
 
-import java.util.Objects;
 import java.util.function.Supplier;
 
 public class BindSettingComponent extends SettingComponent {
 
-    Supplier<BindSetting> bindSetting = Suppliers.memoize(() -> (BindSetting) getSettingLayer());
-    Supplier<Float> valueWidth = () -> Api.inter().getWidth(KeyBoardUtil.translate(bindSetting.get().getKey()), 6) + 10;
-    Supplier<String> descriptionText = Suppliers.memoize(() -> MsdfUtil.cutString(getSettingLayer().getDescription().getString(), 6, 240f / 2 - 10));
+    private final Supplier<BindSetting> bindSetting =
+            Suppliers.memoize(() -> (BindSetting) getSettingLayer());
+
+    private String getBindText() {
+        String translated = KeyBoardUtil.translate(bindSetting.get().getKey());
+        return translated == null || translated.isEmpty() ? "N/A" : translated;
+    }
+
+    private float getValueWidth() {
+        return Api.inter().getWidth(getBindText(), 6) + 10;
+    }
+
+    private final Supplier<String> descriptionText =
+            Suppliers.memoize(() -> MsdfUtil.cutString(
+                    getSettingLayer().getDescription().getString(),
+                    6, 240f / 2 - 10
+            ));
 
     public BindSettingComponent(SettingLayer settingLayer) {
         super(settingLayer);
@@ -30,16 +43,26 @@ public class BindSettingComponent extends SettingComponent {
 
     @Override
     public void init() {
-        float moduleNameHeight = Api.inter().getHeight(getSettingLayer().getName().getString(), 7);
-        float descriptionHeight = Api.inter().getHeight(descriptionText.get(), 6);
-
-        size(240f / 2 - 10, moduleNameHeight + 5 + descriptionHeight);
+        float nameH = Api.inter().getHeight(getSettingLayer().getName().getString(), 7);
+        float descH = Api.inter().getHeight(descriptionText.get(), 6);
+        size(240f / 2 - 10, nameH + 5 + descH);
     }
 
     @Override
     public BindSettingComponent render(DrawContext context, int mouseX, int mouseY, float delta) {
-        float animation = getSettingLayer().getAnimation().getOutput().floatValue();
+        boolean hovered = Math.isHover(mouseX, mouseY, getX(), getY(), getWidth(), getHeight());
+        boolean waitingBind = bindSetting.get().getSelected();
 
+        // Hover-фон
+        if (hovered) {
+            Api.rectangle()
+                    .size(new SizeState(getWidth(), getHeight()))
+                    .color(new QuadColorState(ColorUtility.applyOpacity(0xFFFFFFFF, 8)))
+                    .build()
+                    .render(context.getMatrices().peek().getPositionMatrix(), getX(), getY());
+        }
+
+        // Имя
         Api.text()
                 .size(7)
                 .color(ColorUtility.applyOpacity(0xFFFFFFFF, 95))
@@ -48,55 +71,80 @@ public class BindSettingComponent extends SettingComponent {
                 .build()
                 .render(context.getMatrices().peek().getPositionMatrix(), getX(), getY() - 1);
 
-        if (!descriptionText.get().isEmpty())
+        // Описание
+        if (!descriptionText.get().isEmpty()) {
             Api.text()
                     .size(6)
                     .color(ColorUtility.applyOpacity(0xFFFFFFFF, 50))
                     .text(descriptionText.get())
                     .font(Api.inter())
                     .build()
-                    .render(context.getMatrices().peek().getPositionMatrix(), getX(), getY() + Api.inter().getHeight(getSettingLayer().getName().getString(), 7) + 4);
+                    .render(context.getMatrices().peek().getPositionMatrix(),
+                            getX(),
+                            getY() + Api.inter().getHeight(getSettingLayer().getName().getString(), 7) + 4);
+        }
 
-        Api.border()
-                .size(new SizeState(valueWidth.get(), 9))
+        float valW = getValueWidth();
+        float boxX = getX() + getWidth() - valW;
+        float boxY = getY();
+
+        // Value-box фон
+        Api.blur()
+                .size(new SizeState(valW, 9))
                 .radius(new QuadRadiusState(2))
-                .color(new QuadColorState(ColorUtility.applyOpacity(0xFFFFFFFF, (int) (25 + (25 * animation)))))
-                .thickness(-1f)
+                .blurRadius(6f)
                 .build()
-                .render(context.getMatrices().peek().getPositionMatrix(), getX() + getWidth() - valueWidth.get(), getY());
+                .render(context.getMatrices().peek().getPositionMatrix(), boxX, boxY);
 
+        Api.rectangle()
+                .size(new SizeState(valW, 9))
+                .radius(new QuadRadiusState(2))
+                .color(new QuadColorState(
+                        ColorUtility.applyOpacity(0xFFFFFFFF,
+                                waitingBind
+                                        ? (int) (20 + (Math.sin(System.currentTimeMillis() / 150.0) + 1) * 20)
+                                        : (hovered ? 18 : 10)
+                        )))
+                .build()
+                .render(context.getMatrices().peek().getPositionMatrix(), boxX, boxY);
+
+        // Текст привязки
         Api.text()
                 .size(6)
                 .color(0xFFFFFFFF)
-                .text(KeyBoardUtil.translate(bindSetting.get().getKey()))
+                .text(getBindText())
                 .font(Api.inter())
                 .build()
-                .render(context.getMatrices().peek().getPositionMatrix(), getX() + getWidth() - valueWidth.get() + 5, getY() + 1);
+                .render(context.getMatrices().peek().getPositionMatrix(),
+                        boxX + 5, boxY + 1);
 
-        return null;
+        return this;
     }
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (!bindSetting.get().getSelected()) return false;
 
-        bindSetting.get().set(keyCode == GLFW.GLFW_KEY_DELETE ? 0 : keyCode);
-
-        return false;
+        if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+            bindSetting.get().setSelected(false); // отмена бинда
+        } else {
+            bindSetting.get().set(keyCode == GLFW.GLFW_KEY_DELETE ? 0 : keyCode);
+            bindSetting.get().setSelected(false);
+        }
+        return true;
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (Math.isHover(mouseX, mouseY, getX(), getY(), getWidth(), getHeight())) {
-            if (button == 0)
+            if (button == 0) {
                 bindSetting.get().setSelected(!bindSetting.get().getSelected());
-            else if (bindSetting.get().getSelected()) {
+            } else if (bindSetting.get().getSelected()) {
                 bindSetting.get().set(button);
+                bindSetting.get().setSelected(false);
             }
-
             return true;
         }
-
         return super.mouseClicked(mouseX, mouseY, button);
     }
 }

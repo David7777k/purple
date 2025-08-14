@@ -51,4 +51,7 @@ public abstract class Animation implements AnimationCalculation {
                 ? value
                 : calculation(counter.getTime()) * value;
     }
+
+    public void update() {
+    }
 }
