@@ -29,7 +29,7 @@ public class PanelsLayer extends Component {
     @Override
     public PanelsLayer render(DrawContext context, int mouseX, int mouseY, float delta) {
         float x = getX();
-        final float panelWidth = 250f / 2f;
+        final float panelWidth = 250f / 2f; // узкая карточка
         final float gap = 5f;
 
         for (PanelComponent e : componentsList) {

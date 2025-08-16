@@ -37,30 +37,35 @@ public class ModeListSettingWindowComponent extends WindowLayer {
 
     @Override
     public ModeListSettingWindowComponent render(DrawContext context, int mouseX, int mouseY, float delta) {
-        Api.border()
-                .radius(new QuadRadiusState(2))
-                .size(new SizeState(getWidth(), getHeight()))
-                .color(new QuadColorState(ColorUtility.applyOpacity(0xFFFFFFFF, 25)))
-                .thickness(-.5f)
-                .build()
-                .render(context.getMatrices().peek().getPositionMatrix(), getX(), getY());
-
+        // Blur + фон
         Api.blur()
-                .radius(new QuadRadiusState(2))
+                .radius(new QuadRadiusState(3))
                 .size(new SizeState(getWidth(), getHeight()))
-                .blurRadius(8)
+                .blurRadius(10)
                 .build()
                 .render(context.getMatrices().peek().getPositionMatrix(), getX(), getY());
 
         Api.rectangle()
-                .radius(new QuadRadiusState(2))
+                .radius(new QuadRadiusState(3))
                 .size(new SizeState(getWidth(), getHeight()))
-                .color(new QuadColorState(ColorUtility.applyOpacity(0xFF000000, 65)))
+                .color(new QuadColorState(ColorUtility.applyOpacity(0xFF000000, 70)))
                 .build()
                 .render(context.getMatrices().peek().getPositionMatrix(), getX(), getY());
 
+        // Элементы
         float offset = 0f;
         for (Component e : components) {
+            boolean hovered = Math.isHover(mouseX, mouseY, getX(), getY() + offset, getWidth(), 15f);
+
+            if (hovered) {
+                Api.rectangle()
+                        .size(new SizeState(getWidth(), 15f))
+                        .radius(new QuadRadiusState(2))
+                        .color(new QuadColorState(ColorUtility.applyOpacity(0xFFFFFFFF, 20)))
+                        .build()
+                        .render(context.getMatrices().peek().getPositionMatrix(), getX(), getY() + offset);
+            }
+
             e.position(getX(), getY() + offset).size(getWidth(), 15f).render(context, mouseX, mouseY, delta);
             offset += 15f;
         }

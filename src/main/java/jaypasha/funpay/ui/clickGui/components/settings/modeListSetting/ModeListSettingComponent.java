@@ -31,7 +31,6 @@ public class ModeListSettingComponent extends SettingComponent {
     @Override
     public void init() {
         windowLayer.init();
-
         float contentWidth = 240f / 2 - 10;
         float nameH = Api.inter().getHeight(getSettingLayer().getName().getString(), 7);
 
@@ -44,12 +43,9 @@ public class ModeListSettingComponent extends SettingComponent {
 
     @Override
     public ModeListSettingComponent render(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Обновляем позицию окна на каждый кадр — чтобы оно «следовало» за компонентом
         windowLayer.position(getX() + getWidth() - windowLayer.getWidth(), getY() + getHeight() / 2f);
 
-        float dynamicWrap = Math.max(0f, getWidth() - windowLayer.getWidth() - 10f);
-        String descriptionText = MsdfUtil.cutString(getSettingLayer().getDescription().getString(), 6, dynamicWrap);
-
+        // Название
         Api.text()
                 .size(7)
                 .color(ColorUtility.applyOpacity(0xFFFFFFFF, 95))
@@ -58,6 +54,9 @@ public class ModeListSettingComponent extends SettingComponent {
                 .build()
                 .render(context.getMatrices().peek().getPositionMatrix(), getX(), getY() - 1);
 
+        // Описание
+        float dynamicWrap = Math.max(0f, getWidth() - windowLayer.getWidth() - 10f);
+        String descriptionText = MsdfUtil.cutString(getSettingLayer().getDescription().getString(), 6, dynamicWrap);
         if (!descriptionText.isEmpty()) {
             Api.text()
                     .size(6)
@@ -70,19 +69,26 @@ public class ModeListSettingComponent extends SettingComponent {
                             getY() + Api.inter().getHeight(getSettingLayer().getName().getString(), 7) + 4);
         }
 
+        // Value box (чужой стиль)
         String valueText = modeListSetting.get().empty() || modeListSetting.get().emptySelected()
                 ? "N/A"
                 : modeListSetting.get().getSelected().getFirst();
         float valueWidth = Api.inter().getWidth(valueText, 6) + 10;
 
-        boolean hovered = jaypasha.funpay.utility.math.Math.isHover(
-                mouseX, mouseY, getX() + getWidth() - valueWidth, getY(), valueWidth, 9
-        );
+        boolean hovered = jaypasha.funpay.utility.math.Math.isHover(mouseX, mouseY,
+                getX() + getWidth() - valueWidth, getY(), valueWidth, 9);
+
+        Api.blur()
+                .radius(new QuadRadiusState(2))
+                .size(new SizeState(valueWidth, 9))
+                .blurRadius(8)
+                .build()
+                .render(context.getMatrices().peek().getPositionMatrix(), getX() + getWidth() - valueWidth, getY());
 
         Api.rectangle()
                 .radius(new QuadRadiusState(2))
                 .size(new SizeState(valueWidth, 9))
-                .color(new QuadColorState(ColorUtility.applyOpacity(0xFFFFFFFF, hovered ? 20 : 10)))
+                .color(new QuadColorState(ColorUtility.applyOpacity(0xFF000000, hovered ? 80 : 60)))
                 .build()
                 .render(context.getMatrices().peek().getPositionMatrix(), getX() + getWidth() - valueWidth, getY());
 
@@ -92,7 +98,8 @@ public class ModeListSettingComponent extends SettingComponent {
                 .text(valueText)
                 .font(Api.inter())
                 .build()
-                .render(context.getMatrices().peek().getPositionMatrix(), getX() + getWidth() - valueWidth + 5, getY() + 0.5f);
+                .render(context.getMatrices().peek().getPositionMatrix(),
+                        getX() + getWidth() - valueWidth + 5, getY() + 0.5f);
 
         return this;
     }
@@ -100,8 +107,8 @@ public class ModeListSettingComponent extends SettingComponent {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         WindowRepository windowRepository = Pasxalka.getInstance().getClickGuiScreen().getWindowRepository();
-        if (jaypasha.funpay.utility.math.Math.isHover(mouseX, mouseY, getX(), getY(), getWidth(), getHeight()) && !windowRepository.contains(windowLayer)) {
-            // На всякий случай обновим позицию перед пушем
+        if (jaypasha.funpay.utility.math.Math.isHover(mouseX, mouseY, getX(), getY(), getWidth(), getHeight())
+                && !windowRepository.contains(windowLayer)) {
             windowLayer.position(getX() + getWidth() - windowLayer.getWidth(), getY() + getHeight() / 2f);
             windowRepository.push(windowLayer);
             return true;

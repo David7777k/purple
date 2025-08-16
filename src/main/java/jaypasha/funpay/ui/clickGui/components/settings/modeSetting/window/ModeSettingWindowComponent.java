@@ -2,7 +2,6 @@ package jaypasha.funpay.ui.clickGui.components.settings.modeSetting.window;
 
 import jaypasha.funpay.Api;
 import jaypasha.funpay.Pasxalka;
-import jaypasha.funpay.api.animations.Direction;
 import jaypasha.funpay.modules.settings.impl.ModeSetting;
 import jaypasha.funpay.ui.clickGui.Component;
 import jaypasha.funpay.ui.clickGui.components.settings.modeSetting.ModeSettingHelper;
@@ -18,7 +17,6 @@ import net.minecraft.client.gui.DrawContext;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ModeSettingWindowComponent extends WindowLayer {
@@ -42,16 +40,7 @@ public class ModeSettingWindowComponent extends WindowLayer {
 
     @Override
     public ModeSettingWindowComponent render(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Border
-        Api.border()
-                .radius(new QuadRadiusState(3))
-                .size(new SizeState(getWidth(), getHeight()))
-                .color(new QuadColorState(ColorUtility.applyOpacity(0xFFFFFFFF, 28)))
-                .thickness(-.5f)
-                .build()
-                .render(context.getMatrices().peek().getPositionMatrix(), getX(), getY());
-
-        // Blur background
+        // Blur
         Api.blur()
                 .radius(new QuadRadiusState(3))
                 .size(new SizeState(getWidth(), getHeight()))
@@ -59,15 +48,15 @@ public class ModeSettingWindowComponent extends WindowLayer {
                 .build()
                 .render(context.getMatrices().peek().getPositionMatrix(), getX(), getY());
 
-        // Semi-transparent fill
+        // Фон
         Api.rectangle()
                 .radius(new QuadRadiusState(3))
                 .size(new SizeState(getWidth(), getHeight()))
-                .color(new QuadColorState(ColorUtility.applyOpacity(0xFF000000, 72)))
+                .color(new QuadColorState(ColorUtility.applyOpacity(0xFF000000, 70)))
                 .build()
                 .render(context.getMatrices().peek().getPositionMatrix(), getX(), getY());
 
-        // Components rendering with hover highlight
+        // Подсветка при hover
         float offsetY = 0f;
         for (Component c : components) {
             boolean hovered = Math.isHover(mouseX, mouseY, getX(), getY() + offsetY, getWidth(), 15f);
@@ -76,7 +65,7 @@ public class ModeSettingWindowComponent extends WindowLayer {
                 Api.rectangle()
                         .size(new SizeState(getWidth(), 15f))
                         .radius(new QuadRadiusState(2))
-                        .color(new QuadColorState(ColorUtility.applyOpacity(0xFFFFFFFF, 15)))
+                        .color(new QuadColorState(ColorUtility.applyOpacity(0xFFFFFFFF, 20)))
                         .build()
                         .render(context.getMatrices().peek().getPositionMatrix(), getX(), getY() + offsetY);
             }
@@ -94,7 +83,6 @@ public class ModeSettingWindowComponent extends WindowLayer {
             components.forEach(e -> e.mouseClicked(mouseX, mouseY, button));
             return true;
         }
-
         Pasxalka.getInstance().getClickGuiScreen().getWindowRepository().pop(this);
         return true;
     }

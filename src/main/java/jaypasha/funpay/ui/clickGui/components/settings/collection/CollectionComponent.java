@@ -15,7 +15,6 @@ import java.util.List;
 public class CollectionComponent extends SettingComponent {
 
     private static final float CHILD_GAP = 4f;
-
     private final List<SettingComponent> childSettingsComponents = new ArrayList<>();
 
     public CollectionComponent(Collection collection) {
@@ -61,9 +60,8 @@ public class CollectionComponent extends SettingComponent {
                         getY()
                 );
 
-        // Рендер видимых дочерних компонентов с равномерным отступом
+        // Рендер дочерних
         float yBase = getY() + Api.inter().getHeight(title, 7.5f) + 5f;
-
         List<SettingComponent> visible = childSettingsComponents.stream()
                 .filter(c -> c.getSettingLayer().getVisible().get())
                 .toList();
@@ -80,23 +78,19 @@ public class CollectionComponent extends SettingComponent {
         return this;
     }
 
-    @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+    @Override public boolean mouseReleased(double mouseX, double mouseY, int button) {
         return childSettingsComponents.stream().anyMatch(e -> e.mouseReleased(mouseX, mouseY, button));
     }
 
-    @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    @Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
         return childSettingsComponents.stream().anyMatch(e -> e.mouseClicked(mouseX, mouseY, button));
     }
 
-    @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    @Override public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         return childSettingsComponents.stream().anyMatch(e -> e.keyPressed(keyCode, scanCode, modifiers));
     }
 
-    @Override
-    public boolean keyReleased(int keyCode, int scanCode, int modifiers) {
+    @Override public boolean keyReleased(int keyCode, int scanCode, int modifiers) {
         return childSettingsComponents.stream().anyMatch(e -> e.keyReleased(keyCode, scanCode, modifiers));
     }
 }

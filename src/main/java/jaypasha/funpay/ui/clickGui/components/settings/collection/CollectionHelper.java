@@ -1,7 +1,6 @@
 package jaypasha.funpay.ui.clickGui.components.settings.collection;
 
 import jaypasha.funpay.ui.clickGui.components.settings.SettingComponent;
-
 import java.util.List;
 import java.util.Objects;
 

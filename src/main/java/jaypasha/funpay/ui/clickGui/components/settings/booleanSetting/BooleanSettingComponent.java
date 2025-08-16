@@ -21,9 +21,8 @@ public class BooleanSettingComponent extends SettingComponent {
 
     @Override
     public void init() {
-        // фикс: рассчитываем wrap по известной ширине компонента, а не по getWidth()=0 до size(...)
         float baseWidth = 240f / 2f - 10f;
-        float wrap = baseWidth - 35f; // учёт зоны переключателя/отступов
+        float wrap = baseWidth - 35f;
         descriptionText = MsdfUtil.cutString(getSettingLayer().getDescription().getString(), 6, wrap);
 
         float nameHeight = Api.inter().getHeight(getSettingLayer().getName().getString(), 7);
@@ -36,7 +35,6 @@ public class BooleanSettingComponent extends SettingComponent {
         float anim = getSettingLayer().getAnimation().getOutput().floatValue();
         boolean hovered = Math.isHover(mouseX, mouseY, getX(), getY(), getWidth(), getHeight());
 
-        // Фон при hover
         if (hovered) {
             Api.rectangle()
                     .size(new SizeState(getWidth(), getHeight()))
@@ -45,7 +43,6 @@ public class BooleanSettingComponent extends SettingComponent {
                     .render(context.getMatrices().peek().getPositionMatrix(), getX(), getY());
         }
 
-        // Имя
         Api.text()
                 .size(7)
                 .color(ColorUtility.applyOpacity(0xFFFFFFFF, 95))
@@ -54,7 +51,6 @@ public class BooleanSettingComponent extends SettingComponent {
                 .build()
                 .render(context.getMatrices().peek().getPositionMatrix(), getX(), getY() - 1);
 
-        // Описание
         if (!descriptionText.isEmpty()) {
             Api.text()
                     .size(6)
@@ -69,13 +65,11 @@ public class BooleanSettingComponent extends SettingComponent {
                     );
         }
 
-        // Тумблер
         float toggleWidth = 16f;
         float toggleHeight = 8f;
         float toggleX = getX() + getWidth() - toggleWidth;
         float toggleY = getY() + (getHeight() - toggleHeight) / 2;
 
-        // Фон тумблера
         Api.rectangle()
                 .size(new SizeState(toggleWidth, toggleHeight))
                 .color(new QuadColorState(ColorUtility.applyOpacity(0xFFFFFFFF, 20)))
@@ -83,7 +77,6 @@ public class BooleanSettingComponent extends SettingComponent {
                 .build()
                 .render(context.getMatrices().peek().getPositionMatrix(), toggleX, toggleY);
 
-        // Кружок
         float knobSize = hovered ? 6.5f : 6f;
         float knobX = toggleX + 1 + anim * (toggleWidth - knobSize - 2);
         Api.rectangle()

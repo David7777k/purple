@@ -34,7 +34,6 @@ public class ModeSettingComponent extends SettingComponent {
     public void init() {
         windowLayer.init();
 
-        // В init ещё нет «живой» ширины, поэтому используем базовую константу
         float contentWidth = 240f / 2 - 10;
         float nameH = Api.inter().getHeight(getSettingLayer().getName().getString(), 7);
 
@@ -47,10 +46,9 @@ public class ModeSettingComponent extends SettingComponent {
 
     @Override
     public ModeSettingComponent render(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Актуализируем позицию окна каждый кадр
         windowLayer.position(getX() + getWidth() - windowLayer.getWidth(), getY() + getHeight() / 2f);
 
-        // Name
+        // Имя
         Api.text()
                 .size(7)
                 .color(ColorUtility.applyOpacity(0xFFFFFFFF, 95))
@@ -59,7 +57,7 @@ public class ModeSettingComponent extends SettingComponent {
                 .build()
                 .render(context.getMatrices().peek().getPositionMatrix(), getX(), getY() - 1);
 
-        // Description (c «живой» шириной)
+        // Описание
         float wrap = Math.max(0f, getWidth() - windowLayer.getWidth() - 10f);
         String description = MsdfUtil.cutString(getSettingLayer().getDescription().getString(), 6, wrap);
         if (!description.isEmpty()) {
@@ -74,15 +72,22 @@ public class ModeSettingComponent extends SettingComponent {
                             getY() + Api.inter().getHeight(getSettingLayer().getName().getString(), 7) + 4);
         }
 
-        // Value box with hover effect
+        // Value box
         String valueText = Objects.requireNonNullElse(modeSetting.get().getValue(), "N/A");
         float valueWidth = Api.inter().getWidth(valueText, 6) + 10;
         boolean hovered = Math.isHover(mouseX, mouseY, getX() + getWidth() - valueWidth, getY(), valueWidth, 9);
 
+        Api.blur()
+                .radius(new QuadRadiusState(2))
+                .size(new SizeState(valueWidth, 9))
+                .blurRadius(8)
+                .build()
+                .render(context.getMatrices().peek().getPositionMatrix(), getX() + getWidth() - valueWidth, getY());
+
         Api.rectangle()
                 .radius(new QuadRadiusState(2))
                 .size(new SizeState(valueWidth, 9))
-                .color(new QuadColorState(ColorUtility.applyOpacity(0xFFFFFFFF, hovered ? 20 : 10)))
+                .color(new QuadColorState(ColorUtility.applyOpacity(0xFF000000, hovered ? 80 : 60)))
                 .build()
                 .render(context.getMatrices().peek().getPositionMatrix(), getX() + getWidth() - valueWidth, getY());
 
@@ -104,7 +109,6 @@ public class ModeSettingComponent extends SettingComponent {
 
         if (Math.isHover(mouseX, mouseY, getX(), getY(), getWidth(), getHeight())) {
             if (!repo.contains(windowLayer)) {
-                // Подстрахуемся положением
                 windowLayer.position(getX() + getWidth() - windowLayer.getWidth(), getY() + getHeight() / 2f);
                 repo.push(windowLayer);
             }

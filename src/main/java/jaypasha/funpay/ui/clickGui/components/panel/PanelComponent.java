@@ -26,13 +26,12 @@ public class PanelComponent extends Component {
 
     private List<ModuleLayerComponent> componentsList = new ArrayList<>();
     private final BackgroundComponent backgroundComponent;
-
     private float scroll = 0f;
     private float animationScroll = 0f;
 
     private final Category category;
 
-    // визуальные константы
+    // визуальные константы, заточенные под «узкий/аккуратный» вид
     private static final float PADDING_X = 2.5f;
     private static final float HEADER_H = 32f;
     private static final float BOTTOM_PAD = 14.5f;
@@ -48,7 +47,7 @@ public class PanelComponent extends Component {
 
     @Override
     public void init() {
-        // подготавливаем список модулей с учётом поиска
+        // список модулей с учётом поиска
         final String search = SearchComponent.getSearchSource().get().getText().toString().toLowerCase();
         List<ModuleLayerComponent> all = Helper.moduleLayers(category);
 
@@ -72,49 +71,37 @@ public class PanelComponent extends Component {
         // фон/каркас панели
         backgroundComponent.position(getX(), getY()).size(getWidth(), getHeight()).render(context, mouseX, mouseY, delta);
 
-        // сглаживание скролла
+        // сглаживание скролла, как в исходнике
         animationScroll = MathHelper.lerp(0.15f, animationScroll, scroll);
 
-        // видимая область контента
-        final float contentX = getX() + PADDING_X;
-        final float contentY = getY() + HEADER_H;
-        final float visibleW = getWidth() - PADDING_X * 2f;
-        final float visibleH = getHeight() - HEADER_H - BOTTOM_PAD;
+        // контентная область
+        float contentX = getX() + PADDING_X;
+        float contentY = getY() + HEADER_H;
+        float contentW = getWidth() - PADDING_X * 2f - 2f; // -2f под правую полосу скролла
+        float contentH = getHeight() - HEADER_H - BOTTOM_PAD;
 
-        // клип
-        Scissors.push(contentX, contentY, visibleW, visibleH);
+        // клиппинг
+        Scissors.push(contentX, contentY, contentW, contentH);
 
-        float yOffset = 0f;
-        float contentHeight = 0f;
-
-        for (ModuleLayerComponent e : componentsList) {
-            float moduleHeight = max(MIN_ITEM_H, e.getTotalHeight());
-            float y = contentY + yOffset + animationScroll;
-
-            e.position(contentX, y).size(ITEM_WIDTH, moduleHeight);
-
-            try {
-                e.render(context, mouseX, mouseY, delta);
-            } catch (Exception ex) {
-                System.err.println("Failed to render module: " + e.getModuleLayer().getModuleName().getString() + " - " + ex.getMessage());
-            }
-
-            yOffset += moduleHeight + ITEM_SPACING;
-            contentHeight += moduleHeight + ITEM_SPACING;
+        // раскладка карточек/строк модулей «узкой колонкой» (высота модуля считает сам компонент)
+        float y = contentY - animationScroll;
+        for (ModuleLayerComponent m : componentsList) {
+            float itemH = max(MIN_ITEM_H, m.getTotalHeight());
+            m.position(contentX, y).size(contentW, itemH).render(context, mouseX, mouseY, delta);
+            y += itemH + ITEM_SPACING;
         }
 
         Scissors.pop();
 
-        // корректные границы скролла: minScroll <= scroll <= 0
-        float minScroll = min(0f, visibleH - contentHeight);
-        scroll = MathHelper.clamp(scroll, minScroll, 0f);
-
-        // индикатор скролла
-        if (contentHeight > visibleH) {
-            float ratio = visibleH / contentHeight;
-            float thumbH = Math.max(18f, visibleH * ratio);
-            float progress = (-animationScroll) / (contentHeight - visibleH);
-            float thumbY = contentY + (visibleH - thumbH) * MathHelper.clamp(progress, 0f, 1f);
+        // скроллбар
+        float totalContentH = getTotalContentHeight();
+        float visibleH = contentH;
+        if (totalContentH > visibleH + 1f) {
+            float trackH = visibleH;
+            float thumbH = max(20f, (visibleH / totalContentH) * trackH);
+            float maxScroll = totalContentH - visibleH;
+            float scroll01 = max(0f, min(1f, animationScroll / maxScroll));
+            float thumbY = contentY + (trackH - thumbH) * scroll01;
 
             // трек
             Api.rectangle()
@@ -155,10 +142,12 @@ public class PanelComponent extends Component {
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
         if (Math.isHover(mouseX, mouseY, getX(), getY(), getWidth(), getHeight())) {
-            // чуть более отзывчивый скролл
+            // отзывчивый скролл
             scroll += (float) (verticalAmount * 18f);
-            // не возвращаем сразу true, чтобы внутренний модуль мог прокручивать свою область,
-            // но базовый Screen уже считает событие обработанным
+            // кламп по содержимому
+            float maxScroll = Math.max(0f, getTotalContentHeight() - (getHeight() - HEADER_H - BOTTOM_PAD));
+            if (scroll < 0f) scroll = 0f;
+            if (scroll > maxScroll) scroll = maxScroll;
         }
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
     }

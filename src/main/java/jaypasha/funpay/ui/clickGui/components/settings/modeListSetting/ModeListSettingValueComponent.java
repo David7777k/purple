@@ -22,38 +22,65 @@ public class ModeListSettingValueComponent extends Component {
 
     @Override
     public ModeListSettingValueComponent render(DrawContext context, int mouseX, int mouseY, float delta) {
+        boolean enabled = setting.get(value).getEnabled();
+        float anim = setting.get(value).getAnimation().getOutput().floatValue();
+
+        // Blur фон + rect
+        Api.blur()
+                .radius(new QuadRadiusState(2))
+                .size(new SizeState(getWidth(), getHeight()))
+                .blurRadius(6)
+                .build()
+                .render(context.getMatrices().peek().getPositionMatrix(), getX(), getY());
+
         Api.rectangle()
                 .size(new SizeState(getWidth(), getHeight()))
-                .color(new QuadColorState(ColorUtility.applyOpacity(0xFF000000, (int) (60 * setting.get(value).getAnimation().getOutput().floatValue()))))
+                .color(new QuadColorState(ColorUtility.applyOpacity(0xFF000000, (int) (enabled ? 70 : 50))))
                 .radius(new QuadRadiusState(2))
                 .build()
                 .render(context.getMatrices().peek().getPositionMatrix(), getX(), getY());
 
+        // Hover highlight
+        boolean hovered = Math.isHover(mouseX, mouseY, getX(), getY(), getWidth(), getHeight());
+        if (hovered) {
+            Api.rectangle()
+                    .size(new SizeState(getWidth(), getHeight()))
+                    .color(new QuadColorState(ColorUtility.applyOpacity(0xFFFFFFFF, 15)))
+                    .radius(new QuadRadiusState(2))
+                    .build()
+                    .render(context.getMatrices().peek().getPositionMatrix(), getX(), getY());
+        }
+
+        // Текст значения
         Api.text()
                 .font(Api.inter())
-                .size(8)
-                .text(value)
-                .color(ColorUtility.applyOpacity(0xFFFFFFFF, (int) (50 + (50 * setting.get(value).getAnimation().getOutput().floatValue()))))
-                .build()
-                .render(context.getMatrices().peek().getPositionMatrix(), getX() + 5, getY() + Api.inter().getHeight(value, 8) / 4);
-
-        Api.text()
-                .text("B")
                 .size(7)
-                .font(Api.icons())
-                .color(ColorUtility.applyOpacity(0xFFFFFFFF, (int) (100 * setting.get(value).getAnimation().getOutput().floatValue())))
+                .text(value)
+                .color(ColorUtility.applyOpacity(0xFFFFFFFF, (int) (50 + 50 * anim)))
                 .build()
-                .render(context.getMatrices().peek().getPositionMatrix(), getX() + getWidth() - 7 - 5, getY() - .5f + (getHeight() - 7) / 2);
+                .render(context.getMatrices().peek().getPositionMatrix(), getX() + 5, getY() + (getHeight() / 2f - Api.inter().getHeight(value, 7) / 2f));
 
-        return null;
+        // Галочка справа (вместо "B")
+        if (enabled) {
+            Api.text()
+                    .text("✔")
+                    .size(7)
+                    .font(Api.inter())
+                    .color(ColorUtility.applyOpacity(0xFFFFFFFF, (int) (80 + 20 * anim)))
+                    .build()
+                    .render(context.getMatrices().peek().getPositionMatrix(),
+                            getX() + getWidth() - 10, getY() + (getHeight() / 2f - 3));
+        }
+
+        return this;
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (Math.isHover(mouseX, mouseY, getX(), getY(), getWidth(), getHeight())) {
             setting.get(value).set(!setting.get(value).getEnabled());
+            return true;
         }
-
         return super.mouseClicked(mouseX, mouseY, button);
     }
 }
