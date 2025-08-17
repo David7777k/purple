@@ -45,7 +45,7 @@ public class BindSettingComponent extends SettingComponent {
     public void init() {
         float nameH = Api.inter().getHeight(getSettingLayer().getName().getString(), 7);
         float descH = Api.inter().getHeight(descriptionText.get(), 6);
-        size(240f / 2 - 10, nameH + 5 + descH);
+        size(240f / 2 - 10, nameH + 3 + descH);
     }
 
     @Override
@@ -53,7 +53,6 @@ public class BindSettingComponent extends SettingComponent {
         boolean hovered = Math.isHover(mouseX, mouseY, getX(), getY(), getWidth(), getHeight());
         boolean waitingBind = bindSetting.get().getSelected();
 
-        // Hover-фон
         if (hovered) {
             Api.rectangle()
                     .size(new SizeState(getWidth(), getHeight()))
@@ -62,7 +61,6 @@ public class BindSettingComponent extends SettingComponent {
                     .render(context.getMatrices().peek().getPositionMatrix(), getX(), getY());
         }
 
-        // Имя
         Api.text()
                 .size(7)
                 .color(ColorUtility.applyOpacity(0xFFFFFFFF, 95))
@@ -71,7 +69,6 @@ public class BindSettingComponent extends SettingComponent {
                 .build()
                 .render(context.getMatrices().peek().getPositionMatrix(), getX(), getY() - 1);
 
-        // Описание
         if (!descriptionText.get().isEmpty()) {
             Api.text()
                     .size(6)
@@ -88,7 +85,6 @@ public class BindSettingComponent extends SettingComponent {
         float boxX = getX() + getWidth() - valW;
         float boxY = getY();
 
-        // Value-box фон
         Api.blur()
                 .size(new SizeState(valW, 9))
                 .radius(new QuadRadiusState(2))
@@ -108,7 +104,6 @@ public class BindSettingComponent extends SettingComponent {
                 .build()
                 .render(context.getMatrices().peek().getPositionMatrix(), boxX, boxY);
 
-        // Текст привязки
         Api.text()
                 .size(6)
                 .color(0xFFFFFFFF)
@@ -128,7 +123,8 @@ public class BindSettingComponent extends SettingComponent {
         if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
             bindSetting.get().setSelected(false); // отмена бинда
         } else {
-            bindSetting.get().set(keyCode == GLFW.GLFW_KEY_DELETE ? 0 : keyCode);
+            // use -1 as "no key"
+            bindSetting.get().set(keyCode == GLFW.GLFW_KEY_DELETE ? -1 : keyCode);
             bindSetting.get().setSelected(false);
         }
         return true;
@@ -140,6 +136,7 @@ public class BindSettingComponent extends SettingComponent {
             if (button == 0) {
                 bindSetting.get().setSelected(!bindSetting.get().getSelected());
             } else if (bindSetting.get().getSelected()) {
+                // mouse buttons supported as binds (optional)
                 bindSetting.get().set(button);
                 bindSetting.get().setSelected(false);
             }

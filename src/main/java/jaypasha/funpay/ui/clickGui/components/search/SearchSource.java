@@ -1,6 +1,7 @@
 package jaypasha.funpay.ui.clickGui.components.search;
 
 import jaypasha.funpay.ui.clickGui.ClickGuiScreen;
+import jaypasha.funpay.ui.clickGui.sound.ModernSoundManager;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -21,15 +22,13 @@ public class SearchSource {
     @NonFinal
     boolean selected = false;
 
-    // позиция каретки (символьная), всегда от 0..text.length()
     @NonFinal
     int caret = 0;
 
     public void toggle() {
         this.selected = !this.selected;
-        if (this.selected) {
-            moveCaretToEnd();
-        }
+        ModernSoundManager.playToggle(this.selected);
+        if (runnable != null) runnable.run();
     }
 
     public void focus(boolean value) {
@@ -47,13 +46,15 @@ public class SearchSource {
             return;
         }
 
+        ModernSoundManager.playToggle(this.selected);
+
         if (!selected) return;
 
         if (key == GLFW.GLFW_KEY_BACKSPACE) {
             if (text.length() > 0 && caret > 0) {
                 text.deleteCharAt(caret - 1);
                 caret--;
-                runnable.run();
+                if (runnable != null) runnable.run();
             }
             return;
         }
@@ -61,7 +62,7 @@ public class SearchSource {
         if (key == GLFW.GLFW_KEY_DELETE) {
             if (caret < text.length()) {
                 text.deleteCharAt(caret);
-                runnable.run();
+                if (runnable != null) runnable.run();
             }
             return;
         }
@@ -92,6 +93,6 @@ public class SearchSource {
 
         text.insert(caret, chr);
         caret++;
-        runnable.run();
+        if (runnable != null) runnable.run();
     }
 }

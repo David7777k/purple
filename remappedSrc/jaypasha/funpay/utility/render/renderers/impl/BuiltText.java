@@ -31,7 +31,16 @@ public record BuiltText(
 
 	private static final ShaderProgramKey MSDF_FONT_SHADER_KEY = new ShaderProgramKey(ResourceProvider.getShaderIdentifier("msdf_font"),
 		VertexFormats.POSITION_TEXTURE_COLOR, Defines.EMPTY);
-	
+
+
+	// в начале BuiltText.render(...)
+if (this.text == null || this.text.isEmpty()) {
+		return; // ничего не рисуем — избегаем "BufferBuilder was empty"
+		if (this.text == null || this.text.isEmpty()) return;
+	}
+
+
+
 	@Override
     public void render(Matrix4f matrix, float x, float y, float z) {
 		RenderSystem.enableBlend();

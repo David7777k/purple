@@ -56,4 +56,8 @@ public class BindSetting extends SettingLayer {
 
         return this;
     }
+
+    public int get() {
+        return 0;
+    }
 }

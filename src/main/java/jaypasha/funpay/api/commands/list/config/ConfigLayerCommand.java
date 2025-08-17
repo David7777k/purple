@@ -3,6 +3,7 @@ package jaypasha.funpay.api.commands.list.config;
 import com.google.common.collect.Lists;
 import jaypasha.funpay.api.commands.CommandLayer;
 
+
 import java.util.List;
 
 public class ConfigLayerCommand extends CommandLayer {

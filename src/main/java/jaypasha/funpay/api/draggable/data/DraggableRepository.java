@@ -77,11 +77,22 @@ public class DraggableRepository implements Api {
                     float nearestX = Math.round((e.getX() + (e.getWidth() / 2)) / (screenWidth / 10f)) * (screenWidth / 10f);
                     float nearestY = Math.round((e.getY() + (e.getHeight() / 2)) / (screenHeight / 10f)) * (screenHeight / 10f);
 
-                    float РезкаяpedX = Math.clamp(stick(mouseX - (e.getWidth() / 2), nearestX - (e.getWidth() / 2), 10f), 0, screenWidth - e.getWidth());
-                    float РезкаяpedY = Math.clamp(stick(mouseY - (e.getHeight() / 2), nearestY - (e.getHeight() / 2), 10f), 0, screenHeight - e.getHeight());
+                    float clampedX = MathHelper.clamp(stick(mouseX - (e.getWidth() / 2), nearestX - (e.getWidth() / 2), 10f), 0, screenWidth - e.getWidth());
+                    float clampedY = MathHelper.clamp(stick(mouseY - (e.getHeight() / 2), nearestY - (e.getHeight() / 2), 10f), 0, screenHeight - e.getHeight());
 
-                    e.setX(altPressed.get() ? e.getX() : netEnabled ? MathHelper.lerp(.1f, e.getX(), РезкаяpedX) : mouseX - (e.getWidth() / 2));
-                    e.setY(netEnabled ? MathHelper.lerp(.1f, e.getY(), РезкаяpedY) : mouseY - (e.getHeight() / 2));
+                    if (altPressed.get()) {
+                        // ALT зажат — фиксируем позицию
+                        e.setX(e.getX());
+                        e.setY(e.getY());
+                    } else if (netEnabled) {
+                        // движение по сетке с плавной интерполяцией
+                        e.setX(MathHelper.lerp(0.1f, e.getX(), clampedX));
+                        e.setY(MathHelper.lerp(0.1f, e.getY(), clampedY));
+                    } else {
+                        // свободное перемещение
+                        e.setX(mouseX - (e.getWidth() / 2f));
+                        e.setY(mouseY - (e.getHeight() / 2f));
+                    }
 
                     renderLine(context.getMatrices().peek().getPositionMatrix(), 0, e.getY() - .75f + (e.getHeight() / 2), mc.getWindow().getScaledWidth(), 1.5f, 255f);
                     renderLine(context.getMatrices().peek().getPositionMatrix(), e.getX() - .75f + (e.getWidth() / 2), 0, 1.5f, mc.getWindow().getScaledHeight(), 255f);

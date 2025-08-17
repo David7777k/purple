@@ -7,7 +7,7 @@ import jaypasha.funpay.modules.settings.SettingLayer;
 import jaypasha.funpay.modules.settings.impl.BooleanSetting;
 import jaypasha.funpay.modules.settings.impl.Collection;
 import jaypasha.funpay.modules.settings.impl.SliderSetting;
-import jaypasha.funpay.ui.clickGui.components.module.ModuleLayerComponent;
+import jaypasha.funpay.ui.clickGui.components.module.ModernModuleComponent;
 import jaypasha.funpay.ui.clickGui.components.settings.SettingComponent;
 import jaypasha.funpay.ui.clickGui.components.settings.booleanSetting.BooleanSettingComponent;
 import jaypasha.funpay.ui.clickGui.components.settings.collection.CollectionComponent;
@@ -19,11 +19,11 @@ import java.util.function.Predicate;
 
 public final class Helper {
 
-    public static List<ModuleLayerComponent> moduleLayers(Category category, Predicate<ModuleLayer> predicate) {
+    public static List<ModernModuleComponent> moduleLayers(Category category, Predicate<ModuleLayer> predicate) {
         return Pasxalka.getInstance().getModuleRepository().getModuleLayers().stream()
                 .filter(e -> e.getCategory().equals(category))
                 .filter(predicate)
-                .map(ModuleLayerComponent::new)
+                .map(ModernModuleComponent::new)
                 .toList();
     }
 

@@ -4,7 +4,7 @@ import jaypasha.funpay.modules.more.Category;
 import jaypasha.funpay.ui.clickGui.Component;
 import jaypasha.funpay.ui.clickGui.Helper;
 import jaypasha.funpay.ui.clickGui.components.BackgroundComponent;
-import jaypasha.funpay.ui.clickGui.components.module.ModuleLayerComponent;
+import jaypasha.funpay.ui.clickGui.components.module.ModernModuleComponent;
 import jaypasha.funpay.ui.clickGui.components.settings.SettingComponent;
 import jaypasha.funpay.utility.math.Math;
 import lombok.AccessLevel;
@@ -16,19 +16,19 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class PanelComponent extends Component {
+public class ModernPanel extends Component {
 
-    List<ModuleLayerComponent> componentsList = new ArrayList<>();
+    List<ModernModuleComponent> componentsList = new ArrayList<>();
 
     BackgroundComponent backgroundComponent;
 
-    public PanelComponent(Category category) {
+    public ModernPanel(Category category) {
         backgroundComponent = new BackgroundComponent(category);
         componentsList.addAll(Helper.moduleLayers(category, (e) -> true));
     }
 
     @Override
-    public PanelComponent render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public ModernPanel render(DrawContext context, int mouseX, int mouseY, float delta) {
 //        Если делать Search будете то разлогайте
 //        componentsList.addAll(Helper.moduleLayers(category, (e) -> e.getModuleName().getString().contains(searchValue)));
 

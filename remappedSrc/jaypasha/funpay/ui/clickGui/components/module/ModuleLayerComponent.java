@@ -26,13 +26,13 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @Getter
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class ModuleLayerComponent extends Component {
+public class ModernModuleComponent extends Component {
 
     ModuleLayer moduleLayer;
 
     List<SettingComponent> components = new ArrayList<>();
 
-    public ModuleLayerComponent(ModuleLayer moduleLayer) {
+    public ModernModuleComponent(ModuleLayer moduleLayer) {
         this.moduleLayer = moduleLayer;
         this.components.addAll(Helper.settingComponents(moduleLayer));
     }

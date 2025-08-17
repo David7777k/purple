@@ -41,7 +41,7 @@ public class CollectionComponent extends SettingComponent {
             offset.set(offset.get() + e.getHeight() + 2.5f);
         });
 
-        return null;
+        return this;
     }
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {

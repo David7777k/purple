@@ -30,7 +30,7 @@ public record BuiltTexture(
 
     private static final ShaderProgramKey TEXTURE_SHADER_KEY = new ShaderProgramKey(ResourceProvider.getShaderIdentifier("texture"),
         VertexFormats.POSITION_TEXTURE_COLOR, Defines.EMPTY);
-    
+
     @Override
     public void render(Matrix4f matrix, float x, float y, float z) {
         RenderSystem.enableBlend();
@@ -58,6 +58,8 @@ public record BuiltTexture(
 
         RenderSystem.enableCull();
         RenderSystem.disableBlend();
+
+
     }
 
 }

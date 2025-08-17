@@ -17,7 +17,7 @@ public class PanelsLayer extends Component {
     @Override
     public void init() {
         componentsList.clear();
-        Arrays.stream(Category.values()).map(PanelComponent::new).forEach(componentsList::add);
+        Arrays.stream(Category.values()).map(ModernPanel::new).forEach(componentsList::add);
     }
 
     @Override

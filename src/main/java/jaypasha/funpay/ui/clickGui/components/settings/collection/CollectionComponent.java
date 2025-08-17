@@ -34,49 +34,25 @@ public class CollectionComponent extends SettingComponent {
 
     @Override
     public CollectionComponent render(DrawContext context, int mouseX, int mouseY, float delta) {
-        String title = getSettingLayer().getName().getString();
-        float titleWidth = Api.inter().getWidth(title, 7.5f);
-        boolean hovered = jaypasha.funpay.utility.math.Math.isHover(mouseX, mouseY, getX(), getY(), getWidth(),
-                Api.inter().getHeight(title, 7.5f) + 2);
-
-        // Фон контейнера
-        Api.rectangle()
-                .size(new SizeState(getWidth(), getHeight()))
-                .radius(new QuadRadiusState(3))
-                .color(new QuadColorState(ColorUtility.applyOpacity(0xFF000000, 25)))
-                .build()
-                .render(context.getMatrices().peek().getPositionMatrix(), getX(), getY());
-
-        // Заголовок
         Api.text()
                 .font(Api.inter())
-                .color(ColorUtility.applyOpacity(0xFFFFFFFF, hovered ? 100 : 85))
-                .text(title)
+                .color(0xFFFFFFFF)
+                .text(getSettingLayer().getName().getString())
                 .size(7.5f)
                 .build()
-                .render(
-                        context.getMatrices().peek().getPositionMatrix(),
-                        getX() + (getWidth() - titleWidth) / 2f,
-                        getY()
-                );
-
-        // Рендер дочерних
-        float yBase = getY() + Api.inter().getHeight(title, 7.5f) + 5f;
-        List<SettingComponent> visible = childSettingsComponents.stream()
-                .filter(c -> c.getSettingLayer().getVisible().get())
-                .toList();
+                .render(context.getMatrices().peek().getPositionMatrix(), getX() + getWidth() / 2 - Api.inter().getWidth(getSettingLayer().getName().getString(), 7.5f) / 2, getY());
 
         float offset = 0f;
-        for (int i = 0; i < visible.size(); i++) {
-            SettingComponent child = visible.get(i);
-            float yPos = yBase + offset;
-            child.position(getX(), yPos).render(context, mouseX, mouseY, delta);
+        for (SettingComponent e : childSettingsComponents) {
+            e.position(getX(), getY() + offset + Api.inter().getHeight(getSettingLayer().getName().getString(), 7.5f) + 5)
+                    .render(context, mouseX, mouseY, delta);
 
-            offset += child.getHeight();
-            if (i < visible.size() - 1) offset += CHILD_GAP;
+            offset += e.getHeight() + 4f;
         }
+
         return this;
     }
+
 
     @Override public boolean mouseReleased(double mouseX, double mouseY, int button) {
         return childSettingsComponents.stream().anyMatch(e -> e.mouseReleased(mouseX, mouseY, button));
