@@ -13,10 +13,16 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public abstract class WindowLayer implements ComponentBuilder {
 
-    float x,y, width, height;
+    float x, y, width, height;
     Animation animation = new DecelerateAnimation()
             .setMs(250)
             .setValue(1);
+
+    public float getX() { return x; }
+    public float getY() { return y; }
+    public float getWidth() { return width; }
+    public float getHeight() { return height; }
+    public Animation getAnimation() { return animation; }
 
     @Override
     public WindowLayer position(float x, float y) {

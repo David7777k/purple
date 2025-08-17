@@ -29,25 +29,22 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 @Getter
-@FieldDefaults(level = AccessLevel.PRIVATE) // убрали makeFinal
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class ClickGuiScreen extends Screen implements Api {
 
     List<ModernPanel> panels = new ArrayList<>();
     WindowRepository windowRepository = new WindowRepository();
     ModernSearchField searchField;
 
-    // Анимации
     Animation scaleAnimation = new DecelerateAnimation().setMs(250).setValue(1f);
     Animation gradientAnimation = new DecelerateAnimation().setMs(300).setValue(1f);
     Animation imageAnimation = new DecelerateAnimation().setMs(500).setValue(1f);
 
-    // Размеры и позиции
     float panelWidth = 120f;
     float panelHeight = 300f;
     float panelSpacing = 10f;
     float scale = 1.0f;
 
-    // Состояние
     boolean isClosing = false;
 
     Supplier<Float> centerX = () -> mc.getWindow().getScaledWidth() / 2f;
@@ -56,12 +53,9 @@ public class ClickGuiScreen extends Screen implements Api {
     public ClickGuiScreen() {
         super(Text.of("Modern ClickGUI"));
 
-        // Создаем панели для каждой категории
         for (Category category : Category.values()) {
             panels.add(new ModernPanel(category));
         }
-
-        // Создаем поле поиска
         searchField = new ModernSearchField();
 
         try {
@@ -128,20 +122,27 @@ public class ClickGuiScreen extends Screen implements Api {
 
         try {
             float scaleValue = scaleAnimation != null ? scaleAnimation.getOutput().floatValue() : 1f;
+            float combinedScale = Math.max(0.0001f, scaleValue * scale);
             float gradientValue = gradientAnimation != null ? gradientAnimation.getOutput().floatValue() : 1f;
             float imageValue = imageAnimation != null ? imageAnimation.getOutput().floatValue() : 1f;
+
+            // Инвертируем координаты мыши в масштабированное пространство
+            double adjMouseX = invScaleCoord(mouseX, centerX.get(), combinedScale);
+            double adjMouseY = invScaleCoord(mouseY, centerY.get(), combinedScale);
+            int rMouseX = (int) Math.round(adjMouseX);
+            int rMouseY = (int) Math.round(adjMouseY);
 
             renderBackground(context, gradientValue);
             renderImage(context, imageValue);
 
             context.getMatrices().push();
             context.getMatrices().translate(centerX.get(), centerY.get(), 0);
-            context.getMatrices().scale(scaleValue * scale, scaleValue * scale, 1f);
+            context.getMatrices().scale(combinedScale, combinedScale, 1f);
             context.getMatrices().translate(-centerX.get(), -centerY.get(), 0);
 
-            renderPanels(context, mouseX, mouseY, delta);
-            renderSearchField(context, mouseX, mouseY, delta);
-            renderWindows(context, mouseX, mouseY, delta);
+            renderPanels(context, rMouseX, rMouseY, delta);
+            renderSearchField(context, rMouseX, rMouseY, delta);
+            renderWindows(context, rMouseX, rMouseY, delta);
 
             context.getMatrices().pop();
         } catch (Exception e) {
@@ -149,6 +150,10 @@ public class ClickGuiScreen extends Screen implements Api {
         }
 
         super.render(context, mouseX, mouseY, delta);
+    }
+
+    private static double invScaleCoord(double coord, float pivot, float scale) {
+        return pivot + (coord - pivot) / Math.max(scale, 1e-4f);
     }
 
     private void renderBackground(DrawContext context, float gradientValue) {
@@ -194,7 +199,7 @@ public class ClickGuiScreen extends Screen implements Api {
     }
 
     @Subscribe
-    public void keyListener(KeyEvent keyEvent) {
+    public void keyListener(jaypasha.funpay.api.events.impl.KeyEvent keyEvent) {
         try {
             if (Objects.isNull(mc.currentScreen) && keyEvent.getKey() == GLFW.GLFW_KEY_RIGHT_SHIFT) {
                 mc.setScreen(Pasxalka.getInstance().getClickGuiScreen());
@@ -205,8 +210,9 @@ public class ClickGuiScreen extends Screen implements Api {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         try {
-            mouseX = adjustMouseX(mouseX);
-            mouseY = adjustMouseY(mouseY);
+            float combinedScale = Math.max(0.0001f, (scaleAnimation != null ? scaleAnimation.getOutput().floatValue() : 1f) * scale);
+            mouseX = invScaleCoord(mouseX, centerX.get(), combinedScale);
+            mouseY = invScaleCoord(mouseY, centerY.get(), combinedScale);
 
             if (windowRepository != null && windowRepository.mouseClicked(mouseX, mouseY, button)) return true;
             if (searchField != null && searchField.mouseClicked(mouseX, mouseY, button)) return true;
@@ -222,8 +228,9 @@ public class ClickGuiScreen extends Screen implements Api {
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
         try {
-            mouseX = adjustMouseX(mouseX);
-            mouseY = adjustMouseY(mouseY);
+            float combinedScale = Math.max(0.0001f, (scaleAnimation != null ? scaleAnimation.getOutput().floatValue() : 1f) * scale);
+            mouseX = invScaleCoord(mouseX, centerX.get(), combinedScale);
+            mouseY = invScaleCoord(mouseY, centerY.get(), combinedScale);
 
             if (windowRepository != null && windowRepository.mouseReleased(mouseX, mouseY, button)) return true;
             if (searchField != null) searchField.mouseReleased(mouseX, mouseY, button);
@@ -238,8 +245,9 @@ public class ClickGuiScreen extends Screen implements Api {
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
         if (!Double.isFinite(verticalAmount) || !Double.isFinite(horizontalAmount)) return false;
         try {
-            mouseX = adjustMouseX(mouseX);
-            mouseY = adjustMouseY(mouseY);
+            float combinedScale = Math.max(0.0001f, (scaleAnimation != null ? scaleAnimation.getOutput().floatValue() : 1f) * scale);
+            mouseX = invScaleCoord(mouseX, centerX.get(), combinedScale);
+            mouseY = invScaleCoord(mouseY, centerY.get(), combinedScale);
 
             if (windowRepository != null && windowRepository.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)) return true;
 
@@ -304,14 +312,6 @@ public class ClickGuiScreen extends Screen implements Api {
             scale = (screenWidth * 0.9f) / totalWidth;
             scale = MathHelper.clamp(scale, 0.5f, 1.0f);
         } else scale = 1.0f;
-    }
-
-    private double adjustMouseX(double mouseX) {
-        return scale == 1.0f ? mouseX : (mouseX - centerX.get()) / scale + centerX.get();
-    }
-
-    private double adjustMouseY(double mouseY) {
-        return scale == 1.0f ? mouseY : (mouseY - centerY.get()) / scale + centerY.get();
     }
 
     public boolean isSearching() {

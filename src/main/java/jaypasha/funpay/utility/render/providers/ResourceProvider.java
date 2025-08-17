@@ -15,9 +15,14 @@ import net.minecraft.util.Identifier;
 
 public final class ResourceProvider {
 
-	private static final ResourceManager RESOURCE_MANAGER = MinecraftClient.getInstance().getResourceManager();
 	private static final Gson GSON = new Gson();
-	
+
+	private static ResourceManager resourceManager() {
+		MinecraftClient mc = MinecraftClient.getInstance();
+		if (mc == null) throw new IllegalStateException("MinecraftClient not initialized yet");
+		return mc.getResourceManager();
+	}
+
 	public static Identifier getShaderIdentifier(String name) {
 		return Identifier.of("pasxalka", "core/" + name);
 	}
@@ -33,14 +38,13 @@ public final class ResourceProvider {
 	public static String toString(Identifier identifier) {
 		return toString(identifier, "\n");
 	}
-	
+
 	public static String toString(Identifier identifier, String delimiter) {
-		try(InputStream inputStream = RESOURCE_MANAGER.open(identifier);
-				BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+		try (InputStream inputStream = resourceManager().open(identifier);
+			 BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
 			return reader.lines().collect(Collectors.joining(delimiter));
 		} catch (IOException ex) {
 			throw new RuntimeException(ex);
 		}
 	}
-
 }

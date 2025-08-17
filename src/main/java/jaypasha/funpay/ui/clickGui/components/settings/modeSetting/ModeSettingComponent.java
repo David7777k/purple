@@ -108,6 +108,7 @@ public class ModeSettingComponent extends SettingComponent {
         WindowRepository repo = Pasxalka.getInstance().getClickGuiScreen().getWindowRepository();
 
         if (Math.isHover(mouseX, mouseY, getX(), getY(), getWidth(), getHeight())) {
+            if (modeSetting.get().getValues().isEmpty()) return true; // проглатываем клик, но окно не открываем
             if (!repo.contains(windowLayer)) {
                 windowLayer.position(getX() + getWidth() - windowLayer.getWidth(), getY() + getHeight() / 2f);
                 repo.push(windowLayer);

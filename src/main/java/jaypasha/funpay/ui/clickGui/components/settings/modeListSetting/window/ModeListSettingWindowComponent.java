@@ -29,15 +29,21 @@ public class ModeListSettingWindowComponent extends WindowLayer {
 
     @Override
     public void init() {
-        size(
-                modeListSetting.asStringList().stream().map(e -> Api.inter().getWidth(e, 8) + 25).reduce(0f, Float::max),
-                modeListSetting.asStringList().size() * 15f
-        );
+        float w = modeListSetting.asStringList().stream()
+                .map(e -> Api.inter().getWidth(e, 8) + 25)
+                .reduce(0f, Float::max);
+        float h = modeListSetting.asStringList().size() * 15f;
+
+        w = Math.max(40f, w);
+        h = Math.max(15f, h);
+
+        size(w, h);
     }
 
     @Override
     public ModeListSettingWindowComponent render(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Blur + фон
+        if (getWidth() <= 1f || getHeight() <= 1f) return this;
+
         Api.blur()
                 .radius(new QuadRadiusState(3))
                 .size(new SizeState(getWidth(), getHeight()))
@@ -52,10 +58,27 @@ public class ModeListSettingWindowComponent extends WindowLayer {
                 .build()
                 .render(context.getMatrices().peek().getPositionMatrix(), getX(), getY());
 
-        // Элементы
         float offset = 0f;
+        var selected = new java.util.HashSet<>(modeListSetting.getSelected()); // быстрые contains
+
         for (Component e : components) {
+            // Определи метку пункта — если компонент умеет вернуть свой label:
+            // String label = ((YourItemComponent)e).getLabel();
+            // Если нет доступа к label, добавь в компонент getter; иначе подсветить тут нечем.
+
             boolean hovered = Math.isHover(mouseX, mouseY, getX(), getY() + offset, getWidth(), 15f);
+
+            // Пример: если это выбранная строка — фоновая заливка слабее, чем hover:
+            boolean isSelected = false; // <- подставь проверку по label: isSelected = selected.contains(label);
+
+            if (isSelected) {
+                Api.rectangle()
+                        .size(new SizeState(getWidth(), 15f))
+                        .radius(new QuadRadiusState(2))
+                        .color(new QuadColorState(ColorUtility.applyOpacity(0xFFFFFFFF, 12)))
+                        .build()
+                        .render(context.getMatrices().peek().getPositionMatrix(), getX(), getY() + offset);
+            }
 
             if (hovered) {
                 Api.rectangle()
@@ -69,13 +92,16 @@ public class ModeListSettingWindowComponent extends WindowLayer {
             e.position(getX(), getY() + offset).size(getWidth(), 15f).render(context, mouseX, mouseY, delta);
             offset += 15f;
         }
+
         return this;
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (Math.isHover(mouseX, mouseY, getX(), getY(), getWidth(), getHeight())) {
-            components.forEach(e -> e.mouseClicked(mouseX, mouseY, button));
+            for (Component e : components) {
+                if (e.mouseClicked(mouseX, mouseY, button)) return true;
+            }
             return true;
         } else {
             if (getAnimation().getDirection().equals(Direction.BACKWARDS)) return false;

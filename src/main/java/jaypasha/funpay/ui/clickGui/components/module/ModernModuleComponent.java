@@ -30,10 +30,10 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ModernModuleComponent extends Component {
 
-    static final float MODULE_HEIGHT = 18f;          // чуть меньше заголовка модуля
+    static final float MODULE_HEIGHT = 18f;
     static final float CORNER_RADIUS = 4f;
-    static final float SETTINGS_PADDING = 4f;        // меньше внутренних отступов
-    static final float SETTING_SPACING = 2f;         // меньше промежутков между настройками
+    static final float SETTINGS_PADDING = 4f;
+    static final float SETTING_SPACING = 2f;
 
     static final int ENABLED_BG_COLOR = ColorUtility.rgba(45, 46, 53, 120);
     static final int DISABLED_BG_COLOR = ColorUtility.rgba(21, 21, 21, 80);
@@ -57,7 +57,6 @@ public class ModernModuleComponent extends Component {
     long lastToggleTime = 0L;
     static final long TOGGLE_DEBOUNCE_MS = 100L;
 
-    // чтобы не спамить консоль одними и теми же ошибками
     private static volatile boolean BUFFER_ERROR_LOGGED = false;
 
     public ModernModuleComponent(ModuleLayer moduleLayer) {
@@ -69,11 +68,7 @@ public class ModernModuleComponent extends Component {
         bindAnimation.setValue(0f);
 
         for (SettingComponent component : settingComponents) {
-            try {
-                if (component != null) component.init();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            try { if (component != null) component.init(); } catch (Exception e) { e.printStackTrace(); }
         }
     }
 
@@ -88,19 +83,16 @@ public class ModernModuleComponent extends Component {
             renderSettings(context, mouseX, mouseY, delta);
 
         } catch (Exception e) {
-            // единоразово выводим ошибку, чтобы не флудить консоль
             if (!BUFFER_ERROR_LOGGED) {
                 BUFFER_ERROR_LOGGED = true;
                 e.printStackTrace();
             }
         }
-
         return this;
     }
 
     private void updateAnimations(double mouseX, double mouseY) {
-        float targetEnabled = moduleLayer.isEnabled() ? 1f : 0f;
-        enableAnimation.setValue(targetEnabled);
+        // Не фиксируем value каждый кадр — оставляем только направление
         enableAnimation.setDirection(moduleLayer.isEnabled() ? Direction.FORWARDS : Direction.BACKWARDS);
 
         boolean isHovered = Math.isHover(mouseX, mouseY, getX(), getY(), getWidth(), MODULE_HEIGHT);
@@ -130,7 +122,7 @@ public class ModernModuleComponent extends Component {
             Api.rectangle()
                     .size(new SizeState(getWidth(), MODULE_HEIGHT))
                     .radius(new QuadRadiusState(CORNER_RADIUS))
-                    .color(new QuadColorState(ColorUtility.applyOpacity(HOVER_OVERLAY, (int) (255 * hoverValue))))
+                    .color(new QuadColorState(ColorUtility.applyOpacity(HOVER_OVERLAY, 255f * hoverValue)))
                     .build()
                     .render(context.getMatrices().peek().getPositionMatrix(), getX(), getY());
         }
@@ -139,7 +131,7 @@ public class ModernModuleComponent extends Component {
             Api.rectangle()
                     .size(new SizeState(2f, MODULE_HEIGHT))
                     .radius(new QuadRadiusState(1f, 0f, 0f, 1f))
-                    .color(new QuadColorState(ColorUtility.applyOpacity(ENABLED_ACCENT, (int) (255 * enableValue))))
+                    .color(new QuadColorState(ColorUtility.applyOpacity(ENABLED_ACCENT, 255f * enableValue)))
                     .build()
                     .render(context.getMatrices().peek().getPositionMatrix(), getX(), getY());
         }
@@ -160,16 +152,19 @@ public class ModernModuleComponent extends Component {
             textColor = ColorUtility.interpolate(TEXT_COLOR_DISABLED, TEXT_COLOR_ENABLED, enableValue);
         }
 
-        // отрисовка галочки слева, если включено
         if (moduleLayer.isEnabled()) {
-            trySafeTextRender(context, "✔", getX() + 6f,
-                    (int) (getY() + MODULE_HEIGHT / 2f - Api.inter().getHeight("✔", 6f) / 2f), ENABLED_ACCENT, 6f);
+            trySafeTextRender(context,
+                    "✔",
+                    6f,
+                    ENABLED_ACCENT,
+                    getX() + 6f,
+                    (int) (getY() + MODULE_HEIGHT / 2f - Api.inter().getHeight("✔", 6f) / 2f));
         }
 
         if (displayText != null && !displayText.isEmpty()) {
             float x = getX() + (bindValue > 0.5f ? getWidth() / 2f - Api.inter().getWidth(displayText, 6.5f) / 2f : 12f);
             float y = getY() + MODULE_HEIGHT / 2f - Api.inter().getHeight(displayText, 6.5f) / 2f + 1f;
-            trySafeTextRender(context, displayText, x, (int) y, textColor, 6.5f);
+            trySafeTextRender(context, displayText, 6.5f, textColor, x, (int) y);
         }
     }
 
@@ -179,15 +174,10 @@ public class ModernModuleComponent extends Component {
         float enableValue = enableAnimation.getOutput().floatValue();
         float expandValue = expandAnimation.getOutput().floatValue();
 
-        // Используем простые ASCII-символы как fallback, чтобы избежать проблем с неподдерживаемыми глифами.
-        String arrow;
-        if (settingsExpanded) arrow = "v"; // fallback вниз
-        else arrow = ">"; // fallback вправо
-
+        String arrow = settingsExpanded ? "v" : ">";
         int arrowColor = ColorUtility.interpolate(DISABLED_ACCENT, ENABLED_ACCENT, enableValue);
-        arrowColor = ColorUtility.applyOpacity(arrowColor, (int) (255 * (0.7f + 0.3f * expandValue)));
+        arrowColor = ColorUtility.applyOpacity(arrowColor, 255f * (0.7f + 0.3f * expandValue));
 
-        // RENDERING IN TRY/CATCH: если внутренний текстовый рендер выкинет исключение — погасим его.
         try {
             if (arrow != null && !arrow.isEmpty()) {
                 Api.text()
@@ -200,19 +190,12 @@ public class ModernModuleComponent extends Component {
                                 getX() + getWidth() - 12f,
                                 getY() + MODULE_HEIGHT / 2f - 3f);
             }
-        } catch (IllegalStateException ex) {
-            // Защита от BufferBuilder was empty — ничего не рисуем, и логим 1 раз (при необходимости).
-        } catch (Exception ex) {
-            // безопасно подавляем все исключения рендера стрелки
-        }
+        } catch (Exception ignored) {}
     }
-
 
     private void renderSettings(DrawContext context, int mouseX, int mouseY, float delta) {
         if (settingComponents.isEmpty()) return;
 
-        // если settingsExpanded true — показываем полностью (expandValue = 1f)
-        // иначе используем значение анимации (если она есть)
         float expandValue = settingsExpanded ? 1f : expandAnimation.getOutput().floatValue();
         if (expandValue < 0.01f) return;
 
@@ -222,14 +205,14 @@ public class ModernModuleComponent extends Component {
         Api.rectangle()
                 .size(new SizeState(getWidth(), settingsHeight))
                 .radius(new QuadRadiusState(0f, 0f, CORNER_RADIUS, CORNER_RADIUS))
-                .color(new QuadColorState(ColorUtility.applyOpacity(DISABLED_BG_COLOR, (int) (255 * expandValue * 0.8f))))
+                .color(new QuadColorState(ColorUtility.applyOpacity(DISABLED_BG_COLOR, 255f * (expandValue * 0.8f))))
                 .build()
                 .render(context.getMatrices().peek().getPositionMatrix(), getX(), settingsY);
 
-        Scissors.push(getX(), settingsY, getWidth(), Math.max(settingsHeight, mc.getWindow().getScaledHeight() - settingsY));
+        Scissors.push(getX(), settingsY, getWidth(),
+                Math.max(settingsHeight, mc.getWindow().getScaledHeight() - settingsY));
         try {
             float yOffset = SETTINGS_PADDING;
-
             for (SettingComponent component : settingComponents) {
                 if (!component.getSettingLayer().getVisible().get()) continue;
 
@@ -238,17 +221,14 @@ public class ModernModuleComponent extends Component {
                         .size(getWidth() - SETTINGS_PADDING * 2f, component.getHeight());
 
                 if (component.getHeight() > 0) {
-                    try {
-                        component.render(context, mouseX, mouseY, delta);
-                    } catch (Exception e) {
-                        // Подавляем фреймы, чтобы не спамить каждый тик.
+                    try { component.render(context, mouseX, mouseY, delta); }
+                    catch (Exception e) {
                         if (!BUFFER_ERROR_LOGGED) {
                             BUFFER_ERROR_LOGGED = true;
                             System.err.println("Error rendering a setting component: " + e.getMessage());
                         }
                     }
                 }
-
                 yOffset += component.getHeight() + SETTING_SPACING;
             }
         } finally {
@@ -256,26 +236,21 @@ public class ModernModuleComponent extends Component {
         }
     }
 
-
     private float getSettingsHeight() {
         float totalHeight = SETTINGS_PADDING * 2f;
-
         for (SettingComponent component : settingComponents) {
             if (component.getSettingLayer().getVisible().get()) {
                 totalHeight += component.getHeight() + SETTING_SPACING;
             }
         }
-
         return totalHeight;
     }
 
     public float getTotalHeight() {
         float baseHeight = MODULE_HEIGHT;
-        // если флаг раскрытия true — считаем полную высоту (без ожидания анимации)
         if (settingsExpanded) {
             baseHeight += getSettingsHeight();
         } else {
-            // если анимация частично открыта — добавляем её вклад
             baseHeight += getSettingsHeight() * expandAnimation.getOutput().floatValue();
         }
         return baseHeight;
@@ -286,22 +261,18 @@ public class ModernModuleComponent extends Component {
         long currentTime = System.currentTimeMillis();
 
         if (Math.isHover(mouseX, mouseY, getX(), getY(), getWidth(), MODULE_HEIGHT)) {
-            if (button == 0 && currentTime - lastToggleTime >= TOGGLE_DEBOUNCE_MS) { // ЛКМ
+            if (button == 0 && currentTime - lastToggleTime >= TOGGLE_DEBOUNCE_MS) {
                 lastToggleTime = currentTime;
                 EventManager.call(new ModuleEvent.ToggleEvent(moduleLayer));
                 return true;
-            } else if (button == 1 && !settingComponents.isEmpty()) { // ПКМ - expand
+            } else if (button == 1 && !settingComponents.isEmpty()) {
                 settingsExpanded = !settingsExpanded;
-
-                // Попытка корректно стартовать анимацию (если анимация реализована)
                 try {
                     expandAnimation.setDirection(settingsExpanded ? Direction.FORWARDS : Direction.BACKWARDS);
-                    if (settingsExpanded) expandAnimation.setValue(1f);
-                    else expandAnimation.setValue(0f);
-                } catch (Exception ignored) {
-                }
+                    expandAnimation.setValue(settingsExpanded ? 1f : 0f);
+                } catch (Exception ignored) {}
                 return true;
-            } else if (button == 2) { // СКМ
+            } else if (button == 2) {
                 bindMode = !bindMode;
                 bindAnimation.setDirection(bindMode ? Direction.FORWARDS : Direction.BACKWARDS);
                 bindAnimation.setValue(bindMode ? 1f : 0f);
@@ -315,7 +286,6 @@ public class ModernModuleComponent extends Component {
                 if (component.mouseClicked(mouseX, mouseY, button)) return true;
             }
         }
-
         return false;
     }
 
@@ -348,7 +318,6 @@ public class ModernModuleComponent extends Component {
                 if (component.keyPressed(keyCode, scanCode, modifiers)) return true;
             }
         }
-
         return false;
     }
 
@@ -378,9 +347,6 @@ public class ModernModuleComponent extends Component {
         expandAnimation.setDirection(Direction.BACKWARDS);
     }
 
-    /**
-     * Безопасный вызов рендера текста — перехватываем IllegalStateException, чтобы не флудить стектрейсами каждый кадр.
-     */
     private void trySafeTextRender(DrawContext context, String text, float size, int color, float x, float y) {
         if (text == null || text.isEmpty() || Api.inter() == null) return;
         try {
@@ -391,8 +357,6 @@ public class ModernModuleComponent extends Component {
                     .color(color)
                     .build()
                     .render(context.getMatrices().peek().getPositionMatrix(), x, y);
-        } catch (IllegalStateException e) {
-            // Игнорируем ошибку рендеринга пустого буфера
-        }
+        } catch (IllegalStateException ignored) {}
     }
 }
